@@ -1,11 +1,4 @@
+#include "tlm_head.h"
 #include <iostream>
-#include "tlm-head.h"
 
-SC_MODULE(Channel)
-{
-	
-
-	SC_CTOR(Channel);
-
-
-};
+SC_MODULE(Channel) { SC_CTOR(Channel); };
