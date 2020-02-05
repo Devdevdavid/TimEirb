@@ -1,3 +1,5 @@
+#ifndef _CHANNEL_H_
+#define _CHANNEL_H_
 #include <iostream>
 
 #include "tlm-head.h"
@@ -53,3 +55,5 @@ SC_MODULE(Channel)
 };
 
 
+
+#endif /* _CHANNEL_H_ */

@@ -16,7 +16,7 @@ SC_MODULE(Testbench) {
 
   void socket_action(tlm_utils::simple_initiator_socket<Testbench> & socket,
                      tlm_generic_payload * trans);
-  void pmc_write(struct pmc_data pmcData);
+  void pmc_write(const struct pmc_data &pmcData);
   void bus_read(uint32_t address, uint8_t * value, uint8_t length);
   void bus_write(uint32_t address, uint8_t * value, uint8_t length);
   uint8_t bus_read_byte(uint32_t address);
