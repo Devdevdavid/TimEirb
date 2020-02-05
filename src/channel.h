@@ -1,6 +1,4 @@
-#include "tlm_head.h"
 #include <iostream>
-#include <systemc>
 
 #include "tlm-head.h"
 #include "ChannelRegister.h"
