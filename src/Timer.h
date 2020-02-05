@@ -4,10 +4,16 @@
 #include "tlm_head.h"
 
 // MODULES
-SC_MODULE(Timer) {
-  SC_CTOR(Timer);
-  tlm_utils::simple_target_socket<Timer> pmcSocket;
-  tlm_utils::simple_target_socket<Timer> busSocket;
+#include "Channel.h"
+
+SC_MODULE(Timer)
+{
+  tlm_utils::simple_timer_socket<Timer> socket_PMC;
+  tlm_utils::simple_timer_socket<Timer> socket_Bus;
+
+	channel *channel;
+
+	SC_CTOR(Timer);
 };
 
-#endif /* _TOP_H_ */
+#endif /* _TIER_H_ */
