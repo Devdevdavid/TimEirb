@@ -8,19 +8,43 @@
 #include "Timer.h"
 
 SC_MODULE(Testbench) {
+/**
+ * Public methods
+ */
+public:
+  SC_CTOR(Testbench);
+
+/**
+ * Private attributes
+ */
+private:
   Timer *timer1;
   tlm_utils::simple_initiator_socket<Testbench> pmcSocket;
   tlm_utils::simple_initiator_socket<Testbench> busSocket;
 
-  SC_CTOR(Testbench);
-
+/**
+ * SOCKET API
+ */
+private:
   void socket_action(tlm_utils::simple_initiator_socket<Testbench> & socket,
                      tlm_generic_payload * trans);
-  void pmc_write(const struct pmc_data &pmcData);
-  void bus_read(uint32_t address, uint8_t * value, uint8_t length);
-  void bus_write(uint32_t address, uint8_t * value, uint8_t length);
-  uint8_t bus_read_byte(uint32_t address);
-  void bus_write_byte(uint32_t address, uint8_t value);
+  int pmc_write(const struct pmc_data &pmcData);
+  int bus_read(uint32_t address, uint8_t * value, uint8_t length);
+  int bus_write(uint32_t address, uint8_t * value, uint8_t length);
+  int bus_read_byte(uint32_t address, uint8_t *value);
+  int bus_write_byte(uint32_t address, uint8_t value);
+
+/**
+ * TEST API
+ */
+public:
+  int set_pmc_data_valid(uint32_t mck, uint32_t slck);
+  int test_timer_address(void);
+
+/**
+ * TEST STEP
+ */
+public:
   void main_test(void);
 };
 

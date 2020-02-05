@@ -3,6 +3,10 @@
 
 #include <cstdint>
 
+/**
+ * @brief Data Structure used by PMC Module
+ * @details It communicates clock frequencies in Hz
+ */
 struct pmc_data {
   uint32_t mck;
   uint32_t slck;

@@ -2,40 +2,40 @@
 
 Channel::Channel(sc_module_name name) : sc_module(name)
 {
-	
+
 }
-void Channel::generatedClockUpdate( void )
+void Channel::generatedClockUpdate(void)
 {
     switch (register_data[TC_CMR] & TCCLKS){
-        case 0 : 
+        case 0 :
             clk.generated_clock = clk.mclk/2;
         break;
 
-        case 1 : 
+        case 1 :
             clk.generated_clock = clk.mclk/8;
         break;
 
-        case 2 : 
+        case 2 :
             clk.generated_clock = clk.mclk/32;
         break;
 
-        case 3 : 
+        case 3 :
             clk.generated_clock = clk.mclk/128;
         break;
 
-        case 4 : 
+        case 4 :
             clk.generated_clock = clk.sclk;
         break;
     }
 }
 
-void Channel::UpdateClockCounter( void )
+void Channel::UpdateClockCounter(void)
 {
     if (clockEnable())
         clk.clock_counter = clk.generated_clock;
 }
 
-void Channel::clockEnable( void )
+bool Channel::clockEnable(void)
 {
-    
+    return true;
 }
