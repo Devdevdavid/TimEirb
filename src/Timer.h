@@ -6,14 +6,16 @@
 // MODULES
 #include "Channel.h"
 
-SC_MODULE(Timer)
-{
-  tlm_utils::simple_timer_socket<Timer> socket_PMC;
-  tlm_utils::simple_timer_socket<Timer> socket_Bus;
+SC_MODULE(Timer) {
+  tlm_utils::simple_target_socket<Timer> socket_PMC;
+  tlm_utils::simple_target_socket<Timer> socket_Bus;
 
-	channel *channel;
+  Channel *channel;
 
-	SC_CTOR(Timer);
+  void b_transport_pcm(tlm_generic_payload & trans, sc_time & delay);
+  void b_transport_bus(tlm_generic_payload & trans, sc_time & delay);
+
+  SC_CTOR(Timer);
 };
 
 #endif /* _TIER_H_ */

@@ -1,3 +1,6 @@
+#ifndef _CHANNEL_H_
+#define _CHANNEL_H_
+
 #include "tlm_head.h"
 #include <iostream>
 
@@ -17,3 +20,5 @@ struct tio {
   uint32_t frequency;
   uint16_t duty_cycle;
 };
+
+#endif /* _CHANNEL_H_ */
