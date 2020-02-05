@@ -20,7 +20,6 @@ SC_MODULE(Timer)
 {
   tlm_utils::simple_timer_socket<Timer> socket_PMC;
   tlm_utils::simple_timer_socket<Timer> socket_Bus;
-  tlm_utils::simple_timer_socket<Timer> socket_Out;
 
 	channel *channel;
 

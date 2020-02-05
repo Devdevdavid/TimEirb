@@ -3,7 +3,7 @@
 
 Timer::Timer(sc_module_name name) : sc_module(name){
   channel_1 = new channel("channel");
-//channel_2 = new channel("channel");
+//  channel_2 = new channel("channel");
 //  channel_3 = new channel("channel");
 
 void Timer::b_transport(tlm_generic_payload& trans, sc_time& delay)
@@ -28,7 +28,6 @@ void Timer::b_transport(tlm_generic_payload& trans, sc_time& delay)
 
   trans.set_response_status(TLM_OK_RESPONSE)
 
-  socket_PMC.bind(channel->socket);
-  socket_Bus.bind(channel->socket);
-
+  socket_PMC.bind(->socket);
+  socket_Bus.bind(->socket);
 }
