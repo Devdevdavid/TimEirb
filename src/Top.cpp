@@ -7,4 +7,3 @@ Top::Top(sc_module_name name) : sc_module(name)
 
 	initiator->socket.bind(memory->socket);
 }
-

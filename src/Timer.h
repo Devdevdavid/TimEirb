@@ -14,13 +14,17 @@ using namespace std;
 #include "systemc.h"
 
 // MODULES
-#include "channel.h"
+#include "Channel.h"
 
-SC_MODULE(Top)
+SC_MODULE(Timer)
 {
+  tlm_utils::simple_timer_socket<Timer> socket_PMC;
+  tlm_utils::simple_timer_socket<Timer> socket_Bus;
+  tlm_utils::simple_timer_socket<Timer> socket_Out;
+
 	channel *channel;
 
 	SC_CTOR(Timer);
 };
 
-#endif /* _TOP_H_ */
+#endif /* _TIER_H_ */
