@@ -41,7 +41,7 @@ ophelie: all
 quentin: SYSTEMC := /net/s/qgales/systemc-2.3.3
 quentin: all
 
-victor: SYSTEMC := /net/s/vtexier/Documents/3A/S10/modelisation_et_langage_systeme/systemc-2.3.3
+victor: SYSTEMC := /net/s/vtexier/Documents/3A/S10/modelisation_et_langage_systeme/systemc-2.3.3/systemc-2.3.3
 victor: all
 
 all: $(PROGRAM)
