@@ -37,5 +37,22 @@ void Channel::UpdateClockCounter(void)
 
 bool Channel::clockEnable(void)
 {
-    return true;
+    if (((register_data[TC_CCR] & CLKDIS) == (1 << 1)) 
+     || ((register_data[TC_CM] & CPCSTOP) == (1 << 6)) 
+     || ((register_data[TC_CCR] & CPCDIS) == (1 << 7)))
+    {
+        return false;
+    }
+    else if ((register_data[TC_CCR] & CLKEN) == 1)
+    {
+        return true;
+    }
+}
+
+void Channel::tioUpdate(void)
+{
+}
+
+void Channel::getTioa(struct tio tioa)
+{
 }

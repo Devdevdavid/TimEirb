@@ -19,6 +19,12 @@
 #define TC_RESERVED_5 		15
 
 // TC_CMR
-#define TCCLKS 0x0007
+#define TCCLKS 	0x00000007
+#define CPCSTOP 0x00000040
+#define CPCDIS	0x00000080
+
+// TC_CCR
+#define CLKDIS	0x00000002
+#define CLKEN	0x00000001
 
 #endif /* _CHANNEL_REGISTER_H_ */

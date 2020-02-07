@@ -17,7 +17,7 @@ struct clockFrequency {
 };
 
 struct tio {
-  uint32_t frequency;
+  uint32_t clock_frequency;
   uint16_t duty_cycle;
 };
 
