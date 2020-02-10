@@ -3,6 +3,7 @@
 
 // MACROS
 #define is_in_range(value, start, len)  ((value >= start) && (value < (start + len)))
+#define _need_wpen_()    				if (this->isWriteProtected) { return -1; } // Return if write permission is off
 
 // For cmd testing
 #define _is_write()			(cmd == TLM_WRITE_COMMAND)

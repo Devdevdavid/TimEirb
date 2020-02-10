@@ -42,9 +42,6 @@
 #define TC_WPMR_PASSWORD	0x54494D
 #define TC_WPMR_WPEN		(1 << 0)
 
-// MACRO
-#define _need_wpen_()    if (this->isWriteProtected) { return -1; } // Return if write permission is off
-
 SC_MODULE(Timer)
 {
 /**
@@ -75,9 +72,9 @@ public:
 private:
 	uint32_t baseAddress;
 	Channel *channel1;
-	struct pmc_data curPmcData;						/** Last data received from PMC module */
-	uint32_t regSave[TC_REG_COUNT];					/** Value of all the internal regsiters */
-	bool isWriteProtected;							/** Tell if Write protection is enabled (Works on some registers) */
+	struct pmc_data curPmcData;					/** Last data received from PMC module */
+	uint32_t registerData[TC_REG_COUNT];		/** Value of all the internal regsiters */
+	bool isWriteProtected;						/** Tell if Write protection is enabled (Works on some registers) */
 };
 
 #endif /* _TIER_H_ */

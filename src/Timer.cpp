@@ -14,7 +14,8 @@ Timer::Timer(sc_module_name name, uint32_t baseAddress) :
   this->baseAddress = baseAddress;
   this->curPmcData.mck = 0;                         // Timer starts disabled by default
   this->curPmcData.slck = 0;                        // Timer starts disabled by default
-  memset(this->regSave, 0, sizeof(this->regSave));  // Reset value of internal registers
+  memset(this->registerData, 0, sizeof(this->registerData));  // Reset value of internal registers
+  this->isWriteProtected = false;                   // Write protection is disabled at reset
 
   // Instanciate channels
   channel1 = new Channel("Channel");
@@ -81,7 +82,10 @@ void Timer::b_transport_bus(tlm_generic_payload& trans, sc_time& delay)
 
   if (is_in_range(addr, 0, TIMER_CHANNEL_ADDR_SPACE)) {
     // To channel 0
-    cout << "Received for Channel 0" << endl;
+    if (channel1->manage_register(cmd, addr, pData) != 0) {
+      trans.set_response_status(TLM_GENERIC_ERROR_RESPONSE);
+      return;
+    }
   } else if (is_in_range(addr, TIMER_CHANNEL_ADDR_SPACE, TIMER_CHANNEL_ADDR_SPACE)) {
     // To channel 1
     cout << "Received for Channel 1" << endl;
@@ -102,6 +106,14 @@ void Timer::b_transport_bus(tlm_generic_payload& trans, sc_time& delay)
  * Private methods
  */
 
+/**
+ * @brief Manage read and write register for timer
+ *
+ * @param cmd TLM_WRITE_COMMAND or TLM_READ_COMMAND
+ * @param address [TC_BCR to TC_WPMR]
+ * @param pData Pointer on a uint32_t[1]
+ * @return 0: Success, -1: Error
+ */
 int Timer::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
 {
   switch (address) {
@@ -115,7 +127,7 @@ int Timer::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
 
     case TC_BMR:
       if (_is_read()) {
-        (*pData) = regSave[TC_BMR_I];
+        (*pData) = registerData[TC_BMR_I];
       } else {
         _need_wpen_();
 
@@ -144,19 +156,19 @@ int Timer::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
 
     case TC_FMR:
       if (_is_read()) {
-        (*pData) = regSave[TC_FMR_I];
+        (*pData) = registerData[TC_FMR_I];
       } else {
         _need_wpen_();
-        this->regSave[TC_FMR_I] = (*pData);
+        this->registerData[TC_FMR_I] = (*pData);
       }
       break;
 
     case TC_WPMR:
       if (_is_read()) {
-        (*pData) = regSave[TC_WPMR_I];
+        (*pData) = registerData[TC_WPMR_I];
       } else {
         // Save only the WPEN bit
-        this->regSave[TC_WPMR_I] = (*pData) & TC_WPMR_WPEN;
+        this->registerData[TC_WPMR_I] = (*pData) & TC_WPMR_WPEN;
 
         // Is the password ok ?
         if (((*pData) >> 8) == TC_WPMR_PASSWORD) {
@@ -170,7 +182,7 @@ int Timer::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
       break;
 
     default:
-      fprintf(stderr, "Timer::set_register() Ignoring %s at address: 0x%02X\n",
+      fprintf(stderr, "Timer::manage_register() Ignoring %s at address: 0x%02X\n",
         _is_write() ? "write" : "read",
         address);
       return -1;
@@ -179,10 +191,17 @@ int Timer::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
   return 0;
 }
 
+/**
+ * @brief Set the write protection on supported registers
+ *
+ * @param isEnabled boolean
+ */
 void Timer::set_write_protection(bool isEnabled)
 {
   this->isWriteProtected = isEnabled;
-  // TODO: inform channels here
+
+  // Tell the channels
+  channel1->set_write_protection(isEnabled);
 
   // Just debug
   cout << "Timer: Write protection is now ";
