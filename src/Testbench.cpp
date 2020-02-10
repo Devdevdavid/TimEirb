@@ -92,27 +92,28 @@ int Testbench::bus_write(uint32_t address, uint8_t *value, uint8_t length) {
   return ret;
 }
 
-int Testbench::bus_read_byte(uint32_t address, uint8_t *value) {
-  return bus_read(address, value, 1);
+int Testbench::bus_read_byte(uint32_t address, uint32_t *value) {
+  return bus_read(address, (uint8_t *) value, sizeof(*value));
 }
 
-int Testbench::bus_write_byte(uint32_t address, uint8_t value) {
-  return bus_write(address, &value, 1);
+int Testbench::bus_write_byte(uint32_t address, uint32_t value) {
+  return bus_write(address, (uint8_t *) &value, sizeof(value));
 }
 
-int Testbench::timer0_read_byte(uint32_t address, uint8_t *value) {
+int Testbench::timer0_read_byte(uint32_t address, uint32_t *value) {
   return bus_read_byte(TIMER0_BASE_ADDR + address, value);
 }
 
-int Testbench::timer0_write_byte(uint32_t address, uint8_t value) {
+int Testbench::timer0_write_byte(uint32_t address, uint32_t value) {
   return bus_write_byte(TIMER0_BASE_ADDR + address, value);
 }
 
 /********************************************************
- *						TEST API
+ *            FUNCTIONNAL API
  ********************************************************/
 
-int Testbench::set_pmc_data_valid(uint32_t mck, uint32_t slck) {
+int Testbench::set_pmc_data(uint32_t mck, uint32_t slck)
+{
   struct pmc_data pmcData;
   pmcData.mck = mck;
   pmcData.slck = slck;
@@ -123,7 +124,20 @@ int Testbench::set_pmc_data_valid(uint32_t mck, uint32_t slck) {
   return 0;
 }
 
+int Testbench::set_write_protection(bool isEnabled)
+{
+  uint32_t value = (isEnabled) ? TC_WPMR_WPEN : 0;
+  value |= (TC_WPMR_PASSWORD << 8);
+  return timer0_write_byte(TC_WPMR, value);
+}
+
+/********************************************************
+ *						TEST API
+ ********************************************************/
+
 int Testbench::test_timer_address(void) {
+  printf("> BEGIN TIMER ADDRESS\n");
+
   if (timer0_write_byte(0, 0)) {
   	SC_REPORT_ERROR("Testbench::test_timer_address()", "Unable to write at T0@0x0");
   }
@@ -148,6 +162,37 @@ int Testbench::test_timer_address(void) {
     SC_REPORT_ERROR("Testbench::test_timer_address()", "Can write at T0@QIMR and should be read only");
   }
 
+  printf("> TIMER ADDRESS: PASSED\n");
+  return 0;
+}
+
+int Testbench::test_write_protection(void)
+{
+  uint32_t tmp1 = 0x5A5A, tmp2 = 0;
+
+  printf("> BEGIN WRITE PROTECTION\n");
+
+  if (timer0_write_byte(TC_FMR, tmp1)) {
+    SC_REPORT_ERROR("Testbench::test_write_protection()", "Unable to write at T0@FMR");
+  }
+  if (set_write_protection(true)) {
+    SC_REPORT_ERROR("Testbench::test_write_protection()", "Can't turn on write protection");
+  }
+  if (timer0_write_byte(TC_FMR, 0xBB66) == 0) {
+    SC_REPORT_ERROR("Testbench::test_write_protection()", "Can write at T0@FMR and should be protected");
+  }
+  if (set_write_protection(false)) {
+    SC_REPORT_ERROR("Testbench::test_write_protection()", "Can't turn off write protection");
+  }
+  if (timer0_read_byte(TC_FMR, &tmp2)) {
+    SC_REPORT_ERROR("Testbench::test_write_protection()", "Unable to read T0@FMR");
+  }
+
+  if (tmp1 != tmp2) {
+    SC_REPORT_ERROR("Testbench::test_write_protection()", "Value of T0@FMR have been altred during write protection");
+  }
+
+  printf("> WRITE PROTECTION: PASSED\n");
   return 0;
 }
 
@@ -156,7 +201,8 @@ int Testbench::test_timer_address(void) {
  ********************************************************/
 
 void Testbench::main_test(void) {
-  set_pmc_data_valid(0, 0);
-  set_pmc_data_valid(10 * MEGA, 32 * KILO);
+  set_pmc_data(0, 0);
+  set_pmc_data(10 * MEGA, 32 * KILO);
   test_timer_address();
+  test_write_protection();
 }

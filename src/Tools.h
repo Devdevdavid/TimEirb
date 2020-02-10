@@ -12,9 +12,10 @@
 #define _is_read_write_()
 
 // CONSTANTS
-#define KILO	(1000)
-#define MEGA	(KILO * KILO)
-#define GIGA	(KILO * MEGA)
+#define KILO			(1000)
+#define MEGA			(KILO * KILO)
+#define GIGA			(KILO * MEGA)
+#define REGISTER_SIZE	sizeof(uint32_t)
 
 
 #endif /* _TOOLS_H_ */

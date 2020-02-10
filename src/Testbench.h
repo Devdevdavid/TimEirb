@@ -33,17 +33,24 @@ private:
   int bus_read(uint32_t address, uint8_t * value, uint8_t length);
   int bus_write(uint32_t address, uint8_t * value, uint8_t length);
 
-  int bus_read_byte(uint32_t address, uint8_t *value);
-  int bus_write_byte(uint32_t address, uint8_t value);
+  int bus_read_byte(uint32_t address, uint32_t *value);
+  int bus_write_byte(uint32_t address, uint32_t value);
 
-  int timer0_read_byte(uint32_t address, uint8_t *value);
-  int timer0_write_byte(uint32_t address, uint8_t value);
+  int timer0_read_byte(uint32_t address, uint32_t *value);
+  int timer0_write_byte(uint32_t address, uint32_t value);
+
+/**
+ * FUNCTIONNAL API
+ */
+public:
+  int set_pmc_data(uint32_t mck, uint32_t slck);
+  int set_write_protection(bool isEnabled);
 /**
  * TEST API
  */
 public:
-  int set_pmc_data_valid(uint32_t mck, uint32_t slck);
   int test_timer_address(void);
+  int test_write_protection(void);
 
 /**
  * TEST STEP
