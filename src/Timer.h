@@ -14,6 +14,19 @@
 
 #define TIMER_ADDR_SPACE	0xE8
 
+// RESGISTERS ADDRESS TO TIMER ITSELF
+#define TC_BCR	0xC0
+#define TC_BMR	0xC4
+#define TC_QIER	0xC8
+#define TC_QIDR	0xCC
+#define TC_QIMR	0xD0
+#define TC_QISR	0xD4
+#define TC_FMR	0xD8
+#define TC_WPMR	0xE4
+
+/** TC_BCR bit definition */
+#define TC_BCR_SYNC	(1 << 0)
+
 SC_MODULE(Timer)
 {
 /**
@@ -24,6 +37,11 @@ public:
 	void b_transport_pcm(tlm_generic_payload& trans, sc_time& delay);
 	void b_transport_bus(tlm_generic_payload& trans, sc_time& delay);
 
+/**
+ * Private methods
+ */
+private:
+	int set_register(uint8_t cmd, uint32_t address, uint32_t value);
 /**
  * Public attributes
  */

@@ -29,11 +29,15 @@ private:
   void socket_action(tlm_utils::simple_initiator_socket<Testbench> & socket,
                      tlm_generic_payload * trans);
   int pmc_write(const struct pmc_data &pmcData);
+
   int bus_read(uint32_t address, uint8_t * value, uint8_t length);
   int bus_write(uint32_t address, uint8_t * value, uint8_t length);
+
   int bus_read_byte(uint32_t address, uint8_t *value);
   int bus_write_byte(uint32_t address, uint8_t value);
 
+  int timer0_read_byte(uint32_t address, uint8_t *value);
+  int timer0_write_byte(uint32_t address, uint8_t value);
 /**
  * TEST API
  */

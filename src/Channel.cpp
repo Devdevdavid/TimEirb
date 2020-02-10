@@ -37,8 +37,8 @@ void Channel::UpdateClockCounter(void)
 
 bool Channel::clockEnable(void)
 {
-    if (((register_data[TC_CCR] & CLKDIS) == (1 << 1)) 
-     || ((register_data[TC_CM] & CPCSTOP) == (1 << 6)) 
+    if (((register_data[TC_CCR] & CLKDIS) == (1 << 1))
+     //|| ((register_data[TC_CM] & CPCSTOP) == (1 << 6))
      || ((register_data[TC_CCR] & CPCDIS) == (1 << 7)))
     {
         return false;
