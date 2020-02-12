@@ -59,11 +59,34 @@
 /** TC_SR bit definition */
 
 /** TC_IER bit definition */
+#define TC_IER_COVFS    (1 << 0)
+#define TC_IER_LOVRS    (1 << 1)
+#define TC_IER_CPAS     (1 << 2)
+#define TC_IER_CPBS     (1 << 3)
+#define TC_IER_CPCS     (1 << 4)
+#define TC_IER_LDRAS    (1 << 5)
+#define TC_IER_LDRBS    (1 << 6)
+#define TC_IER_ETRGS    (1 << 7)
 
 /** TC_IDR bit definition */
+#define TC_IDR_COVFS    (1 << 0)
+#define TC_IDR_LOVRS    (1 << 1)
+#define TC_IDR_CPAS     (1 << 2)
+#define TC_IDR_CPBS     (1 << 3)
+#define TC_IDR_CPCS     (1 << 4)
+#define TC_IDR_LDRAS    (1 << 5)
+#define TC_IDR_LDRBS    (1 << 6)
+#define TC_IDR_ETRGS    (1 << 7)
 
 /** TC_IMR bit definition */
-
+#define TC_IMR_COVFS    (1 << 0)
+#define TC_IMR_LOVRS    (1 << 1)
+#define TC_IMR_CPAS     (1 << 2)
+#define TC_IMR_CPBS     (1 << 3)
+#define TC_IMR_CPCS     (1 << 4)
+#define TC_IMR_LDRAS    (1 << 5)
+#define TC_IMR_LDRBS    (1 << 6)
+#define TC_IMR_ETRGS    (1 << 7)
 
 struct clockFrequency {
   uint32_t mclk;

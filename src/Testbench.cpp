@@ -196,6 +196,45 @@ int Testbench::test_write_protection(void)
   return 0;
 }
 
+int Testbench::test_interruption(void)
+{
+  uint32_t tmp;
+  uint8_t interArray[] = {TC_QIxR_IDX, TC_QIxR_DIRCHG, TC_QIxR_QERR};
+
+  printf("> BEGIN INTERRUPTION\n");
+
+  for (int i = 0; i < sizeof(interArray); ++i)
+  {
+    // Enable interrupt
+    if (timer0_write_byte(TC_QIER, interArray[i])) {
+      SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to write at T0@QIER");
+    }
+    // Read mask
+    if (timer0_read_byte(TC_QIMR, &tmp)) {
+      SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to read at T0@QIMR");
+    }
+    // Test value
+    if (tmp & interArray[i] == 0) {
+      SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to set the interruption on T0");
+    }
+    // Disable interrupt
+    if (timer0_write_byte(TC_QIDR, interArray[i])) {
+      SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to write at T0@QIDR");
+    }
+    // Read mask
+    if (timer0_read_byte(TC_QIMR, &tmp)) {
+      SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to read at T0@QIMR");
+    }
+    // Test value
+    if (tmp & interArray[i] != 0) {
+      SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to reset the interruption on T0");
+    }
+  }
+
+  printf("> INTERRUPTION: PASSED\n");
+  return 0;
+}
+
 /********************************************************
  *						TEST STEPS
  ********************************************************/
@@ -205,4 +244,5 @@ void Testbench::main_test(void) {
   set_pmc_data(10 * MEGA, 32 * KILO);
   test_timer_address();
   test_write_protection();
+  test_interruption();
 }

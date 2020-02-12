@@ -45,12 +45,14 @@ private:
 public:
   int set_pmc_data(uint32_t mck, uint32_t slck);
   int set_write_protection(bool isEnabled);
+
 /**
  * TEST API
  */
 public:
   int test_timer_address(void);
   int test_write_protection(void);
+  int test_interruption(void);
 
 /**
  * TEST STEP

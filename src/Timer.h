@@ -38,9 +38,23 @@
 /** TC_BCR bit definition */
 #define TC_BCR_SYNC	(1 << 0)
 
+/** TC_BMR bit definition */
+
+/** TC_QIER bit definition */
+/** TC_QIDR bit definition */
+/** TC_QIMR bit definition */
+/** TC_QISR bit definition */
+#define TC_QIxR_IDX			(1 << 0)
+#define TC_QIxR_DIRCHG		(1 << 1)
+#define TC_QIxR_QERR		(1 << 2)
+#define TC_QIxR_Mask		(TC_QIxR_IDX | TC_QIxR_DIRCHG | TC_QIxR_QERR)
+
+/** TC_FMR bit definition */
+
 /** TC_WPMR bit definition */
 #define TC_WPMR_PASSWORD	0x54494D
 #define TC_WPMR_WPEN		(1 << 0)
+
 
 SC_MODULE(Timer)
 {

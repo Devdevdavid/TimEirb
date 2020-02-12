@@ -137,21 +137,29 @@ int Timer::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
     case TC_QIER:
       _is_write_only_();
 
+      if ((*pData) & TC_QIxR_Mask) {
+        registerData[TC_QIMR_I] |= (*pData) & TC_QIxR_Mask;
+      }
       break;
 
     case TC_QIDR:
       _is_write_only_();
 
+      if ((*pData) & TC_QIxR_Mask) {
+        registerData[TC_QIMR_I] &= ~((*pData) & TC_QIxR_Mask);
+      }
       break;
 
     case TC_QIMR:
       _is_read_only_();
-
+      // Just read enabled interrupts
+      (*pData) = registerData[TC_QIMR_I] & TC_QIxR_Mask;
       break;
 
     case TC_QISR:
       _is_read_only_();
-
+      // Mask all disabled interrupts
+      (*pData) = registerData[TC_QISR_I] & registerData[TC_QIMR_I] & TC_QIxR_Mask;
       break;
 
     case TC_FMR:
