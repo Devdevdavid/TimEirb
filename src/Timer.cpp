@@ -117,7 +117,7 @@ void Timer::b_transport_bus(tlm_generic_payload& trans, sc_time& delay)
 int Timer::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
 {
   switch (address) {
-    case TC_BCR:
+    case TC_BCR:                /** Block control */
       _is_write_only_();
 
       if ((*pData) & TC_BCR_SYNC) {
@@ -125,57 +125,57 @@ int Timer::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
       }
       break;
 
-    case TC_BMR:
+    case TC_BMR:                /** Block mode */
       if (_is_read()) {
         (*pData) = registerData[TC_BMR_I];
       } else {
         _need_wpen_();
-
+        registerData[TC_BMR_I] = (*pData) & TC_BMR_Mask;
       }
       break;
 
-    case TC_QIER:
+    case TC_QIER:               /** Enable interrupts */
       _is_write_only_();
 
-      if ((*pData) & TC_QIxR_Mask) {
-        registerData[TC_QIMR_I] |= (*pData) & TC_QIxR_Mask;
-      }
+      // Enable bits only if they are in the mask
+      registerData[TC_QIMR_I] |= (*pData) & TC_QIxR_Mask;
       break;
 
-    case TC_QIDR:
+    case TC_QIDR:               /** Disable interrupts */
       _is_write_only_();
 
-      if ((*pData) & TC_QIxR_Mask) {
-        registerData[TC_QIMR_I] &= ~((*pData) & TC_QIxR_Mask);
-      }
+      // Disbale bits only if they are in the mask
+      registerData[TC_QIMR_I] &= ~((*pData) & TC_QIxR_Mask);
       break;
 
-    case TC_QIMR:
+    case TC_QIMR:               /** Interrupt mask */
       _is_read_only_();
       // Just read enabled interrupts
       (*pData) = registerData[TC_QIMR_I] & TC_QIxR_Mask;
       break;
 
-    case TC_QISR:
+    case TC_QISR:               /** Active interrupts */
       _is_read_only_();
       // Mask all disabled interrupts
       (*pData) = registerData[TC_QISR_I] & registerData[TC_QIMR_I] & TC_QIxR_Mask;
       break;
 
-    case TC_FMR:
+    case TC_FMR:                /** Fault mode */
       if (_is_read()) {
         (*pData) = registerData[TC_FMR_I];
       } else {
         _need_wpen_();
-        this->registerData[TC_FMR_I] = (*pData);
+
+        // Write only bits in the mask
+        this->registerData[TC_FMR_I] = (*pData) & TC_FMR_Mask;
       }
       break;
 
-    case TC_WPMR:
+    case TC_WPMR:               /** Write protection */
       if (_is_read()) {
         (*pData) = registerData[TC_WPMR_I];
       } else {
-        // Save only the WPEN bit
+        // Save only the WPEN bit (not the password!)
         this->registerData[TC_WPMR_I] = (*pData) & TC_WPMR_WPEN;
 
         // Is the password ok ?

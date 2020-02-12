@@ -168,28 +168,28 @@ int Testbench::test_timer_address(void) {
 
 int Testbench::test_write_protection(void)
 {
-  uint32_t tmp1 = 0x5A5A, tmp2 = 0;
+  uint32_t tmp1 = TC_BMR_Mask, tmp2 = 0;
 
   printf("> BEGIN WRITE PROTECTION\n");
 
-  if (timer0_write_byte(TC_FMR, tmp1)) {
-    SC_REPORT_ERROR("Testbench::test_write_protection()", "Unable to write at T0@FMR");
+  if (timer0_write_byte(TC_BMR, tmp1)) {
+    SC_REPORT_ERROR("Testbench::test_write_protection()", "Unable to write at T0@BMR");
   }
   if (set_write_protection(true)) {
     SC_REPORT_ERROR("Testbench::test_write_protection()", "Can't turn on write protection");
   }
-  if (timer0_write_byte(TC_FMR, 0xBB66) == 0) {
-    SC_REPORT_ERROR("Testbench::test_write_protection()", "Can write at T0@FMR and should be protected");
+  if (timer0_write_byte(TC_BMR, 0xBB66) == 0) {
+    SC_REPORT_ERROR("Testbench::test_write_protection()", "Can write at T0@BMR and should be protected");
   }
   if (set_write_protection(false)) {
     SC_REPORT_ERROR("Testbench::test_write_protection()", "Can't turn off write protection");
   }
-  if (timer0_read_byte(TC_FMR, &tmp2)) {
-    SC_REPORT_ERROR("Testbench::test_write_protection()", "Unable to read T0@FMR");
+  if (timer0_read_byte(TC_BMR, &tmp2)) {
+    SC_REPORT_ERROR("Testbench::test_write_protection()", "Unable to read T0@BMR");
   }
 
   if (tmp1 != tmp2) {
-    SC_REPORT_ERROR("Testbench::test_write_protection()", "Value of T0@FMR have been altred during write protection");
+    SC_REPORT_ERROR("Testbench::test_write_protection()", "Value of T0@BMR have been altred during write protection");
   }
 
   printf("> WRITE PROTECTION: PASSED\n");

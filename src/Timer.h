@@ -36,9 +36,24 @@
 #define TC_REG_COUNT 		8
 
 /** TC_BCR bit definition */
-#define TC_BCR_SYNC	(1 << 0)
+#define TC_BCR_SYNC			(1 << 0)
 
 /** TC_BMR bit definition */
+#define TC_BMR_TC0XC0S		(3 << 0)
+#define TC_BMR_TC1XC1S		(3 << 2)
+#define TC_BMR_TC2XC2S		(3 << 4)
+#define TC_BMR_QDEN			(1 << 8)
+#define TC_BMR_POSEN		(1 << 9)
+#define TC_BMR_SPEEDEN		(1 << 10)
+#define TC_BMR_QDTRANS		(1 << 11)
+#define TC_BMR_EDGPHA		(1 << 12)
+#define TC_BMR_INVA			(1 << 13)
+#define TC_BMR_INVB			(1 << 14)
+#define TC_BMR_INVIDX		(1 << 15)
+#define TC_BMR_SWAP			(1 << 16)
+#define TC_BMR_IDXPHB		(1 << 17)
+#define TC_BMR_MAXFILT		(0x3F << 20)
+#define TC_BMR_Mask			(0x03F3FF3F)
 
 /** TC_QIER bit definition */
 /** TC_QIDR bit definition */
@@ -50,6 +65,9 @@
 #define TC_QIxR_Mask		(TC_QIxR_IDX | TC_QIxR_DIRCHG | TC_QIxR_QERR)
 
 /** TC_FMR bit definition */
+#define TC_FMR_ENCF0		(1 << 0)
+#define TC_FMR_ENCF1		(1 << 1)
+#define TC_FMR_Mask			(TC_FMR_ENCF0 | TC_FMR_ENCF1)
 
 /** TC_WPMR bit definition */
 #define TC_WPMR_PASSWORD	0x54494D
