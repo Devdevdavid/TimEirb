@@ -199,14 +199,14 @@ int Testbench::test_write_protection(void)
 int Testbench::test_interruption(void)
 {
   uint32_t tmp;
-  uint8_t interArray[] = {TC_QIxR_IDX, TC_QIxR_DIRCHG, TC_QIxR_QERR};
+  uint32_t interTimerArray[] = {TC_QIxR_IDX, TC_QIxR_DIRCHG, TC_QIxR_QERR};
+  uint32_t interChannelArray[] = {TC_IxR_COVFS, TC_IxR_LOVRS, TC_IxR_CPAS, TC_IxR_CPBS, TC_IxR_CPCS, TC_IxR_LDRAS, TC_IxR_LDRBS, TC_IxR_ETRGS};
 
   printf("> BEGIN INTERRUPTION\n");
 
-  for (int i = 0; i < sizeof(interArray); ++i)
-  {
+  for (int i = 0; i < sizeof(interTimerArray) / sizeof(uint32_t); ++i) {
     // Enable interrupt
-    if (timer0_write_byte(TC_QIER, interArray[i])) {
+    if (timer0_write_byte(TC_QIER, interTimerArray[i])) {
       SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to write at T0@QIER");
     }
     // Read mask
@@ -214,11 +214,11 @@ int Testbench::test_interruption(void)
       SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to read at T0@QIMR");
     }
     // Test value
-    if (tmp & interArray[i] == 0) {
+    if (tmp & interTimerArray[i] == 0) {
       SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to set the interruption on T0");
     }
     // Disable interrupt
-    if (timer0_write_byte(TC_QIDR, interArray[i])) {
+    if (timer0_write_byte(TC_QIDR, interTimerArray[i])) {
       SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to write at T0@QIDR");
     }
     // Read mask
@@ -226,12 +226,84 @@ int Testbench::test_interruption(void)
       SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to read at T0@QIMR");
     }
     // Test value
-    if (tmp & interArray[i] != 0) {
+    if (tmp & interTimerArray[i] != 0) {
       SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to reset the interruption on T0");
     }
   }
+  printf("Timer interuption OK\n");
+
+  for (int i = 0; i < sizeof(interChannelArray) / sizeof(uint32_t); ++i) {
+    // Enable interrupt
+    if (timer0_write_byte(TC_IER, interChannelArray[i])) {
+      SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to write at T0@CH0@IER");
+    }
+    // Read mask
+    if (timer0_read_byte(TC_IMR, &tmp)) {
+      SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to read at T0@CH0@IMR");
+    }
+    // Test value
+    if (tmp & interChannelArray[i] == 0) {
+      SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to set the interruption on T0@CH0");
+    }
+    // Disable interrupt
+    if (timer0_write_byte(TC_IDR, interChannelArray[i])) {
+      SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to write at T0@CH0@IDR");
+    }
+    // Read mask
+    if (timer0_read_byte(TC_IMR, &tmp)) {
+      SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to read at T0@CH0@IMR");
+    }
+    // Test value
+    if (tmp & interChannelArray[i] != 0) {
+      SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to reset the interruption on T0@CH0");
+    }
+  }
+  printf("Channel interuption OK\n");
 
   printf("> INTERRUPTION: PASSED\n");
+  return 0;
+}
+
+int Testbench::test_write_register_ABC(void)
+{
+  uint32_t regABCArray[] = {TC_RA, TC_RB, TC_RC};
+  uint32_t tmp1 = 0x5A5A, tmp2;
+
+  printf("> BEGIN WRITE REGISTER A/B/C\n");
+
+  for (int i = 0; i < sizeof(regABCArray) / sizeof(uint32_t); ++i) {
+    printf("TC_R%c:\n", (i == 0) ? 'A' : (i == 1) ? 'B' : 'C');
+
+    if (set_write_protection(false)) {
+      SC_REPORT_ERROR("Testbench::test_write_protection()", "Can't turn off write protection");
+    }
+    if (timer0_write_byte(TC_CMR, TC_CMRx_WAVE)) {
+      SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to write at T0@CH0@CMR");
+    }
+    if (timer0_write_byte(regABCArray[i], tmp1)) {
+      SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to write at T0@CH0@regA/B/C");
+    }
+    if (timer0_write_byte(TC_CMR, 0)) {
+      SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to write at T0@CH0@CMR");
+    }
+    if (set_write_protection(true)) {
+      SC_REPORT_ERROR("Testbench::test_write_protection()", "Can't turn on write protection");
+    }
+    // Try to corrupt
+    if (timer0_write_byte(regABCArray[i], 0xA0A0) == 0) {
+      SC_REPORT_ERROR("Testbench::test_interruption()", "Can write at T0@CH0@regA/B/C and should be protected");
+    }
+    // Read data and check
+    if (timer0_read_byte(regABCArray[i], &tmp2)) {
+      SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to read at T0@CH0@regA/B/C");
+    }
+
+    if (tmp1 != tmp2) {
+      SC_REPORT_ERROR("Testbench::test_write_protection()", "Value of T0@CH0@regA/B/C have been altred during write protection");
+    }
+  }
+
+  printf("> WRITE REGISTER A/B/C: PASSED\n");
   return 0;
 }
 
@@ -245,4 +317,5 @@ void Testbench::main_test(void) {
   test_timer_address();
   test_write_protection();
   test_interruption();
+  test_write_register_ABC();
 }

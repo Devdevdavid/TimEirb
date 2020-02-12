@@ -53,6 +53,7 @@ public:
   int test_timer_address(void);
   int test_write_protection(void);
   int test_interruption(void);
+  int test_write_register_ABC(void);
 
 /**
  * TEST STEP

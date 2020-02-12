@@ -144,18 +144,20 @@ int Timer::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
     case TC_QIDR:               /** Disable interrupts */
       _is_write_only_();
 
-      // Disbale bits only if they are in the mask
+      // Disable bits only if they are in the mask
       registerData[TC_QIMR_I] &= ~((*pData) & TC_QIxR_Mask);
       break;
 
     case TC_QIMR:               /** Interrupt mask */
       _is_read_only_();
+
       // Just read enabled interrupts
       (*pData) = registerData[TC_QIMR_I] & TC_QIxR_Mask;
       break;
 
     case TC_QISR:               /** Active interrupts */
       _is_read_only_();
+
       // Mask all disabled interrupts
       (*pData) = registerData[TC_QISR_I] & registerData[TC_QIMR_I] & TC_QIxR_Mask;
       break;
@@ -180,6 +182,7 @@ int Timer::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
 
         // Is the password ok ?
         if (((*pData) >> 8) == TC_WPMR_PASSWORD) {
+          // Is the Write protection enabled ?
           if ((*pData) & TC_WPMR_WPEN) {
             set_write_protection(true);
           } else {

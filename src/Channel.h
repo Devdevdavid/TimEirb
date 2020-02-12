@@ -42,62 +42,94 @@
 #define TC_CCR_SWTRG   (1 << 2)
 
 /** TC_CMR bit definition */
-#define TC_CMR_TCCLKS  (0x07 << 0)
-#define TC_CMR_CPCSTOP (1 << 6)
-#define TC_CMR_CPCDIS  (1 << 7)
+// Comon
+#define TC_CMRx_TCCLKS  (7 << 0)
+#define TC_CMRx_CLKI    (1 << 3)
+#define TC_CMRx_BURST   (3 << 4)
+#define TC_CMRx_WAVE    (1 << 15)
+#define TC_CMRx_Mask    (TC_CMRc_Mask | TC_CMRw_Mask)
+
+// For capture mode
+#define TC_CMRc_LDBSTOP (1 << 6)
+#define TC_CMRc_LDBDIS  (1 << 7)
+#define TC_CMRc_ETRGEDG (3 << 8)
+#define TC_CMRc_ABETRG  (1 << 10)
+#define TC_CMRc_CPCTRG  (1 << 14)
+#define TC_CMRc_LDRA    (3 << 16)
+#define TC_CMRc_LDRB    (3 << 18)
+#define TC_CMRc_Mask    (0x000FC7FF)
+
+// For waveform mode
+#define TC_CMRw_CPCSTOP (1 << 6)
+#define TC_CMRw_CPCDIS  (1 << 7)
+#define TC_CMRw_EEVTEDG (3 << 8)
+#define TC_CMRw_EEVT    (3 << 10)
+#define TC_CMRw_ENETRG  (1 << 11)
+#define TC_CMRw_WAVSEL  (3 << 13)
+#define TC_CMRw_ACPA    (3 << 16)
+#define TC_CMRw_ACPC    (3 << 18)
+#define TC_CMRw_AEEVT   (3 << 20)
+#define TC_CMRw_ASWTRG  (3 << 22)
+#define TC_CMRw_BCPB    (3 << 24)
+#define TC_CMRw_BCPC    (3 << 26)
+#define TC_CMRw_BEEVT   (3 << 28)
+#define TC_CMRw_BSWTRG  (3 << 30)
+#define TC_CMRw_Mask    (0xFFFFFFFF)
 
 /** TC_SMMR bit definition */
+#define TC_SMMR_GCEN   (1 << 0)
+#define TC_SMMR_DOWN   (1 << 1)
+#define TC_SMMR_Mask   (TC_SMMR_DOWN | TC_SMMR_GCEN)
 
 /** TC_CV bit definition */
+#define TC_CV_Mask     (0xFFFFFFFF)
 
 /** TC_RA bit definition */
+#define TC_RA_Mask     (0xFFFFFFFF)
 
 /** TC_RB bit definition */
+#define TC_RB_Mask     (0xFFFFFFFF)
 
 /** TC_RC bit definition */
+#define TC_RC_Mask     (0xFFFFFFFF)
 
 /** TC_SR bit definition */
+#define TC_SR_COVFS    (1 << 0)
+#define TC_SR_LOVRS    (1 << 1)
+#define TC_SR_CPAS     (1 << 2)
+#define TC_SR_CPBS     (1 << 3)
+#define TC_SR_CPCS     (1 << 4)
+#define TC_SR_LDRAS    (1 << 5)
+#define TC_SR_LDRBS    (1 << 6)
+#define TC_SR_ETRGS    (1 << 7)
+#define TC_SR_CLKSTA   (1 << 16)
+#define TC_SR_MTIOA    (1 << 17)
+#define TC_SR_MTIOB    (1 << 18)
+#define TC_SR_Mask     (TC_SR_MTIOB | TC_SR_MTIOA | TC_SR_CLKSTA | 0x000700FF)
 
 /** TC_IER bit definition */
-#define TC_IER_COVFS    (1 << 0)
-#define TC_IER_LOVRS    (1 << 1)
-#define TC_IER_CPAS     (1 << 2)
-#define TC_IER_CPBS     (1 << 3)
-#define TC_IER_CPCS     (1 << 4)
-#define TC_IER_LDRAS    (1 << 5)
-#define TC_IER_LDRBS    (1 << 6)
-#define TC_IER_ETRGS    (1 << 7)
-
 /** TC_IDR bit definition */
-#define TC_IDR_COVFS    (1 << 0)
-#define TC_IDR_LOVRS    (1 << 1)
-#define TC_IDR_CPAS     (1 << 2)
-#define TC_IDR_CPBS     (1 << 3)
-#define TC_IDR_CPCS     (1 << 4)
-#define TC_IDR_LDRAS    (1 << 5)
-#define TC_IDR_LDRBS    (1 << 6)
-#define TC_IDR_ETRGS    (1 << 7)
-
 /** TC_IMR bit definition */
-#define TC_IMR_COVFS    (1 << 0)
-#define TC_IMR_LOVRS    (1 << 1)
-#define TC_IMR_CPAS     (1 << 2)
-#define TC_IMR_CPBS     (1 << 3)
-#define TC_IMR_CPCS     (1 << 4)
-#define TC_IMR_LDRAS    (1 << 5)
-#define TC_IMR_LDRBS    (1 << 6)
-#define TC_IMR_ETRGS    (1 << 7)
+#define TC_IxR_COVFS    (1 << 0)
+#define TC_IxR_LOVRS    (1 << 1)
+#define TC_IxR_CPAS     (1 << 2)
+#define TC_IxR_CPBS     (1 << 3)
+#define TC_IxR_CPCS     (1 << 4)
+#define TC_IxR_LDRAS    (1 << 5)
+#define TC_IxR_LDRBS    (1 << 6)
+#define TC_IxR_ETRGS    (1 << 7)
+#define TC_IxR_Mask     (0x000000FF)
 
-struct clockFrequency {
+struct clock_frequency_t {
   uint32_t mclk;
   uint32_t sclk;
-  uint32_t clock_counter;
-  uint32_t generated_clock;
+  uint32_t clockCounter;
+  uint32_t generatedClock;
 };
 
-struct tio {
-  uint32_t clock_frequency;
-  uint16_t duty_cycle;
+struct tio_t {
+  uint32_t clockFrequency;
+  uint16_t dutyCycle;
 };
 
 SC_MODULE(Channel) {
@@ -109,29 +141,27 @@ public:
   int manage_register(uint8_t cmd, uint32_t address, uint32_t *pData);
   void set_write_protection(bool isEnabled);
 
-  void setInputClock(uint32_t mclkFreq, uint32_t sclkFreq);
-  void setReg(uint8_t addr, uint32_t value, uint8_t length);
-  void getReg(uint8_t addr, uint32_t value, uint8_t length);
-  void initInterrupt(void *interruptMethod);
-  void getTioa(struct tio tioa);
-  void getTiob(struct tio tiob);
-  void setSync(void);
+  void set_input_clock(uint32_t mclkFreq, uint32_t sclkFreq);
+  void init_interrupt(void *interruptMethod);
+  void get_tioa(struct tio_t tioa);
+  void get_tiob(struct tio_t tiob);
+  void set_sync(void);
 
   /*
    * private methods
    */
 private:
-  bool clockEnable(void);
-  void UpdateClockCounter(void);
-  void tioUpdate(void);
-  void generatedClockUpdate(void);
+  bool clock_enable(void);
+  void update_clock_counter(void);
+  void tio_update(void);
+  void generated_clock_update(void);
 
   /*
    * private members
    */
 private:
   uint32_t registerData[TCC_REG_COUNT];
-  struct clockFrequency clk;
+  struct clock_frequency_t clk;
   bool isWriteProtected;                /** Tell if Write protection is enabled (Works on some registers) */
 };
 
