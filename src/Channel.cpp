@@ -25,18 +25,20 @@ int Channel::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
       _is_write_only_();
 
       // Test bits but no need to save values
-      // Stop the timer clock
-      if (((*pData) & TC_CCR_CLKDIS) != 0 && ((*pData) & TC_CCR_SWTRG) == 0) {
-
-      }
-      // Start the timer clock
-      if (((*pData) & TC_CCR_SWTRG)
-        || (((*pData) & TC_CCR_CLKEN) != 0) && (((*pData) & TC_CCR_CLKDIS) == 0)) {
-
-      }
       // Reset timer
       if ((*pData) & TC_CCR_SWTRG) {
-
+        reset_counter();
+      }
+      else {
+        // Stop the timer clock
+        if ((*pData) & TC_CCR_CLKDIS) {
+          set_clock_enable(false);
+        } else {
+          // Start the timer clock
+          if ((*pData) & TC_CCR_CLKEN) {
+            set_clock_enable(true);
+          }
+        }
       }
       break;
 
@@ -214,4 +216,14 @@ void Channel::tio_update(void)
 
 void Channel::get_tioa(struct tio_t tioa)
 {
+}
+
+void Channel::reset_counter(void)
+{
+  set_clock_enable(true);
+}
+
+void Channel::set_clock_enable(bool isEnabled)
+{
+
 }

@@ -155,6 +155,8 @@ private:
   void update_clock_counter(void);
   void tio_update(void);
   void generated_clock_update(void);
+  void reset_counter(void);
+  void set_clock_enable(bool isEnabled);
 
   /*
    * private members
