@@ -303,7 +303,56 @@ int Testbench::test_write_register_ABC(void)
     }
   }
 
+  set_write_protection(false);
+
   printf("> WRITE REGISTER A/B/C: PASSED\n");
+  return 0;
+}
+
+int Testbench::test_counter_update(void)
+{
+  uint32_t tmp1, tmp2 = 0;
+
+  printf("> BEGIN COUNTER UPDATE\n");
+
+  // Set input clock
+  if (timer0_read_byte(TC_CMR, &tmp1)) {
+    SC_REPORT_ERROR("Testbench::test_counter_update()", "Unable to read at T0@CH0@CMR");
+  }
+  tmp1 = (tmp1 & ~(TC_CMRx_TCCLKS)) | 0; // 0: /2, 1: /8, 2: /32, 3: /128, 4: SLCK
+  if (timer0_write_byte(TC_CMR, tmp1)) {
+    SC_REPORT_ERROR("Testbench::test_counter_update()", "Unable to write at T0@CH0@CMR");
+  }
+  // if (timer0_write_byte(TC_SMMR, TC_SMMR_DOWN)) {
+  //   SC_REPORT_ERROR("Testbench::test_counter_update()", "Unable to write at T0@CH0@SMMR");
+  // }
+
+  // Enable the clock by a counter reset
+  if (timer0_write_byte(TC_CCR, TC_CCR_SWTRG)) {
+    SC_REPORT_ERROR("Testbench::test_counter_update()", "Unable to write at T0@CH0@CCR");
+  }
+
+  if (timer0_read_byte(TC_CV, &tmp1)) {
+    SC_REPORT_ERROR("Testbench::test_counter_update()", "Unable to read at T0@CH0@CV");
+  }
+
+  wait(1, SC_SEC);
+
+  if (timer0_read_byte(TC_CV, &tmp2)) {
+    SC_REPORT_ERROR("Testbench::test_counter_update()", "Unable to read at T0@CH0@CV");
+  }
+
+  printf("Before: %lu, After: %lu, Delta: %lu\n", tmp1, tmp2, tmp2 - tmp1);
+
+  if (timer0_read_byte(TC_SR, &tmp1)) {
+    SC_REPORT_ERROR("Testbench::test_counter_update()", "Unable to read at T0@CH0@SR");
+  }
+
+  if (tmp1 & TC_SR_COVFS) {
+    printf("Overflow detected\n");
+  }
+
+  printf("> COUNTER UPDATE: PASSED\n");
   return 0;
 }
 
@@ -313,9 +362,10 @@ int Testbench::test_write_register_ABC(void)
 
 void Testbench::main_test(void) {
   set_pmc_data(0, 0);
-  set_pmc_data(10 * MEGA, 32 * KILO);
+  set_pmc_data(1 * KILO, 32 * KILO);
   test_timer_address();
   test_write_protection();
   test_interruption();
   test_write_register_ABC();
+  test_counter_update();
 }

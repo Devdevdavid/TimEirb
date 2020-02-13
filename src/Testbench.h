@@ -54,6 +54,7 @@ public:
   int test_write_protection(void);
   int test_interruption(void);
   int test_write_register_ABC(void);
+  int test_counter_update(void);
 
 /**
  * TEST STEP

@@ -51,12 +51,23 @@ void Timer::b_transport_pcm(tlm_generic_payload& trans, sc_time& delay)
         return;
     }
 
-    // Save data into internal attribute
-    memcpy(&(this->curPmcData), pmcData, sizeof(struct pmc_data));
+    // Check if data changed
+    if (memcmp(&(this->curPmcData), pmcData, sizeof(struct pmc_data)) != 0) {
+      // Save data into internal attribute
+      memcpy(&(this->curPmcData), pmcData, sizeof(struct pmc_data));
 
-    // Print new frequency for debug
-    cout << "Timer: new mck = " << this->curPmcData.mck << " Hz"
-         << " new slck = " << this->curPmcData.slck << " Hz" << endl;
+      // Tell all the channels
+      for (int i = 0; i < CHANNEL_COUNT; ++i) {
+        channels[i]->set_pmc_clock(this->curPmcData);
+      }
+
+      // Print new frequency for debug
+      cout << "Timer: new mck = " << this->curPmcData.mck << " Hz"
+           << " new slck = " << this->curPmcData.slck << " Hz" << endl;
+    } else {
+      // Print new frequency for debug
+      cout << "Timer: clocks unchanged" << endl;
+    }
 
     trans.set_response_status(TLM_OK_RESPONSE);
 }

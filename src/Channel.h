@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "tlm_head.h"
+#include "pmc_interface.h"
 #include "Tools.h"
 
 // ADDRESSES
@@ -42,7 +43,7 @@
 #define TC_CCR_SWTRG   (1 << 2)
 
 /** TC_CMR bit definition */
-// Comon
+// Common
 #define TC_CMRx_TCCLKS  (7 << 0)
 #define TC_CMRx_CLKI    (1 << 3)
 #define TC_CMRx_BURST   (3 << 4)
@@ -120,13 +121,6 @@
 #define TC_IxR_ETRGS    (1 << 7)
 #define TC_IxR_Mask     (0x000000FF)
 
-struct clock_frequency_t {
-  uint32_t mclk;
-  uint32_t sclk;
-  uint32_t clockCounter;
-  uint32_t generatedClock;
-};
-
 struct tio_t {
   uint32_t clockFrequency;
   uint16_t dutyCycle;
@@ -140,8 +134,8 @@ public:
   SC_CTOR(Channel);
   int manage_register(uint8_t cmd, uint32_t address, uint32_t *pData);
   void set_write_protection(bool isEnabled);
+  void set_pmc_clock(const struct pmc_data &pmcData);
 
-  void set_input_clock(uint32_t mclkFreq, uint32_t sclkFreq);
   void init_interrupt(void *interruptMethod);
   void get_tioa(struct tio_t tioa);
   void get_tiob(struct tio_t tiob);
@@ -151,10 +145,9 @@ public:
    * private methods
    */
 private:
-  bool clock_enable(void);
-  void update_clock_counter(void);
+  void update_counter_value(void);
   void tio_update(void);
-  void generated_clock_update(void);
+  void update_counter_clock(void);
   void reset_counter(void);
   void set_clock_enable(bool isEnabled);
 
@@ -163,9 +156,10 @@ private:
    */
 private:
   uint32_t registerData[TCC_REG_COUNT];
-  struct clock_frequency_t clk;
+  uint32_t counterClockFreqHz;          /** The value in hertz of the divided channel clock (0 means turned off) */
+  struct pmc_data curPmcData;           /** Local copy of pmcData given by the Timer */
   bool isWriteProtected;                /** Tell if Write protection is enabled (Works on some registers) */
-  bool isClockEnabled;
+  sc_time lastCounterUpdate;            /** Indicates the last simulation instant when the counter had been updated */
 };
 
 #endif /* _CHANNEL_H_ */
