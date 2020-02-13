@@ -1,11 +1,16 @@
 #ifndef _TIMER_H_
 #define _TIMER_H_
 
+#include <vector>
+
 #include "tlm_head.h"
 #include "pmc_interface.h"
 
 // MODULES
 #include "Channel.h"
+
+// CONSTANTS
+#define CHANNEL_COUNT		3
 
 // ADDRESSES
 #define TIMER0_BASE_ADDR	0x40080000
@@ -95,15 +100,15 @@ private:
  * Public attributes
  */
 public:
-	tlm_utils::simple_target_socket<Timer> socket_PMC;
-	tlm_utils::simple_target_socket<Timer> socket_Bus;
+	tlm_utils::simple_target_socket<Timer> socketPMC;
+	tlm_utils::simple_target_socket<Timer> socketBus;
 
 /**
  * Private attributes
  */
 private:
 	uint32_t baseAddress;
-	Channel *channel1;
+	Channel *channels[CHANNEL_COUNT];			/** Array of channels */
 	struct pmc_data curPmcData;					/** Last data received from PMC module */
 	uint32_t registerData[TC_REG_COUNT];		/** Value of all the internal regsiters */
 	bool isWriteProtected;						/** Tell if Write protection is enabled (Works on some registers) */

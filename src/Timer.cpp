@@ -8,8 +8,8 @@
 
 Timer::Timer(sc_module_name name, uint32_t baseAddress) :
               sc_module(name),
-              socket_PMC("socket_PMC"),
-              socket_Bus("socket_Bus") {
+              socketPMC("socketPMC"),
+              socketBus("socketBus") {
   // Set internal variables
   this->baseAddress = baseAddress;
   this->curPmcData.mck = 0;                         // Timer starts disabled by default
@@ -18,12 +18,14 @@ Timer::Timer(sc_module_name name, uint32_t baseAddress) :
   this->isWriteProtected = false;                   // Write protection is disabled at reset
 
   // Instanciate channels
-  channel1 = new Channel("Channel");
+  for (int i = 0; i < CHANNEL_COUNT; ++i) {
+    string name = "Channel" + to_string(i);
+    channels[i] = new Channel(name.c_str());
+  }
 
   // Link sockets
-  socket_PMC.register_b_transport(this, &Timer::b_transport_pcm);
-  socket_Bus.register_b_transport(this, &Timer::b_transport_bus);
-
+  socketPMC.register_b_transport(this, &Timer::b_transport_pcm);
+  socketBus.register_b_transport(this, &Timer::b_transport_bus);
 }
 
 void Timer::b_transport_pcm(tlm_generic_payload& trans, sc_time& delay)
@@ -61,6 +63,7 @@ void Timer::b_transport_pcm(tlm_generic_payload& trans, sc_time& delay)
 
 void Timer::b_transport_bus(tlm_generic_payload& trans, sc_time& delay)
 {
+  bool isForTimerItSelf = true;
   uint32_t addr = trans.get_address();
   uint32_t *pData = (uint32_t *) trans.get_data_ptr();
   uint32_t cmd = trans.get_command();
@@ -80,20 +83,25 @@ void Timer::b_transport_bus(tlm_generic_payload& trans, sc_time& delay)
   // Remove addresse base offset
   addr -= this->baseAddress;
 
-  if (is_in_range(addr, 0, TIMER_CHANNEL_ADDR_SPACE)) {
-    // To channel 0
-    if (channel1->manage_register(cmd, addr, pData) != 0) {
-      trans.set_response_status(TLM_GENERIC_ERROR_RESPONSE);
-      return;
+  for (int i = 0; i < CHANNEL_COUNT; ++i) {
+    if (is_in_range(addr, i * TIMER_CHANNEL_ADDR_SPACE, TIMER_CHANNEL_ADDR_SPACE)) {
+      // Remove address offset for the selected channel
+      addr -= i * TIMER_CHANNEL_ADDR_SPACE;
+
+      // Notify that this data is not for timer itself
+      isForTimerItSelf = false;
+
+      // Send data to the right channel
+      if (channels[i]->manage_register(cmd, addr, pData) != 0) {
+        trans.set_response_status(TLM_GENERIC_ERROR_RESPONSE);
+        return;
+      }
+      break;
     }
-  } else if (is_in_range(addr, TIMER_CHANNEL_ADDR_SPACE, TIMER_CHANNEL_ADDR_SPACE)) {
-    // To channel 1
-    cout << "Received for Channel 1" << endl;
-  } else if (is_in_range(addr, 2 * TIMER_CHANNEL_ADDR_SPACE, TIMER_CHANNEL_ADDR_SPACE)) {
-    // To channel 2
-    cout << "Received for Channel 2" << endl;
-  } else {
-    // To timer itself
+  }
+
+  // To timer itself
+  if (isForTimerItSelf) {
     if (manage_register(cmd, addr, pData) != 0) {
       trans.set_response_status(TLM_GENERIC_ERROR_RESPONSE);
       return;
@@ -211,15 +219,9 @@ void Timer::set_write_protection(bool isEnabled)
 {
   this->isWriteProtected = isEnabled;
 
-  // Tell the channels
-  channel1->set_write_protection(isEnabled);
-
-  // Just debug
-  cout << "Timer: Write protection is now ";
-  if (isEnabled) {
-    cout << "on" << endl;
-  } else {
-    cout << "off" << endl;
+  // Tell all the channels
+  for (int i = 0; i < CHANNEL_COUNT; ++i) {
+    channels[i]->set_write_protection(isEnabled);
   }
 }
 

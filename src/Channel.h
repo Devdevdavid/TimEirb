@@ -165,6 +165,7 @@ private:
   uint32_t registerData[TCC_REG_COUNT];
   struct clock_frequency_t clk;
   bool isWriteProtected;                /** Tell if Write protection is enabled (Works on some registers) */
+  bool isClockEnabled;
 };
 
 #endif /* _CHANNEL_H_ */

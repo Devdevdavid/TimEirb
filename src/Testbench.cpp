@@ -4,8 +4,8 @@
 Testbench::Testbench(sc_module_name name) : sc_module(name), pmcSocket("pmcSocket"), busSocket("busSocket") {
   timer1 = new Timer("Timer1", TIMER0_BASE_ADDR);
 
-  pmcSocket.bind(timer1->socket_PMC);
-  busSocket.bind(timer1->socket_Bus);
+  pmcSocket.bind(timer1->socketPMC);
+  busSocket.bind(timer1->socketBus);
 
   SC_THREAD(main_test);
 }

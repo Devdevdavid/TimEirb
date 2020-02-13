@@ -6,8 +6,9 @@
 
 Channel::Channel(sc_module_name name) : sc_module(name)
 {
-    this->isWriteProtected = false;                   // Write protection is disabled at reset
-    memset(this->registerData, 0, sizeof(registerData)); // Reset value of internal registers
+    this->isWriteProtected = false;                       // Write protection is disabled at reset
+    this->isClockEnabled = false;                         // Clock is disabled at reset
+    memset(this->registerData, 0, sizeof(registerData));  // Reset value of internal registers
 }
 
 /**
@@ -190,24 +191,9 @@ void Channel::generated_clock_update(void)
 
 void Channel::update_clock_counter(void)
 {
-  if (clock_enable()) {
+  if (this->isClockEnabled) {
     clk.clockCounter = clk.generatedClock;
   }
-}
-
-bool Channel::clock_enable(void)
-{
-  if (((registerData[TC_CCR_I] & TC_CCR_CLKDIS) == (1 << 1))
-    || ((registerData[TC_CMR_I] & TC_CMRw_CPCSTOP) == (1 << 6))
-    || ((registerData[TC_CCR_I] & TC_CCR_CLKDIS) == (1 << 7)))
-  {
-    return false;
-  }
-  else if ((registerData[TC_CCR_I] & TC_CCR_CLKEN) == 1)
-  {
-    return true;
-  }
-  return true;
 }
 
 void Channel::tio_update(void)
@@ -225,5 +211,5 @@ void Channel::reset_counter(void)
 
 void Channel::set_clock_enable(bool isEnabled)
 {
-
+  this->isClockEnabled = isEnabled;
 }
