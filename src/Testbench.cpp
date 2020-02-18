@@ -145,6 +145,8 @@ int Testbench::set_clock_enable(uint8_t channelId, bool isEnabled)
 
 int Testbench::test_timer_configuration(void) {
   uint32_t tmp;
+  uint32_t tmpArray[] = {0, 10, 100};
+  uint32_t regABCArray[] = {TC_RA, TC_RB, TC_RC};
 
   printf("> BEGIN TIMER CONFIGURATION\n");
 
@@ -186,6 +188,25 @@ int Testbench::test_timer_configuration(void) {
   if (tmp & TC_CMRx_WAVE != 0) {
     SC_REPORT_ERROR("Testbench::set_clock_enable()", "Unable to set waveform mode T0");
   }
+
+
+  // RA, RB and RC configuration
+  for (int i = 0; i < sizeof(regABCArray) / sizeof(uint32_t); ++i) {
+    // Configure
+    if (timer0_write_byte(regABCArray[i], tmpArray[i])) {
+      SC_REPORT_ERROR("Testbench::set_clock_enable()", "Can't write at T0@CH0@regA/B/C");
+    }
+    // Read data
+    if (timer0_read_byte(regABCArray[i], &tmp)) {
+      SC_REPORT_ERROR("Testbench::set_clock_enable()", "Unable to read at T0@CH0@regA/B/C");
+    }
+    // Test value
+    if (tmp != tmpArray[i]) {
+      SC_REPORT_ERROR("Testbench::set_clock_enable()", "Unable to configure RA, RB and RC T0");
+    }
+
+  }
+
 
 
   printf("> TIMER CONFIGURATION: PASSED\n");
