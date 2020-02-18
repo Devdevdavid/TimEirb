@@ -126,6 +126,11 @@ struct tio_t {
   uint16_t dutyCycle;
 };
 
+struct clockFrequency {
+  struct pmc_data curPmcData; /** Local copy of pmcData given by the Timer */
+  uint32_t generated_clock;
+};
+
 SC_MODULE(Channel) {
   /*
    * public methods
@@ -155,9 +160,9 @@ private:
    * private members
    */
 private:
-  uint32_t registerData[TCC_REG_COUNT];
-  uint32_t counterClockFreqHz;          /** The value in hertz of the divided channel clock (0 means turned off) */
-  struct pmc_data curPmcData;           /** Local copy of pmcData given by the Timer */
+  void *mInterruptMethod;
+  struct clockFrequency clk;
+  uint32_t registerData[TCC_REG_COUNT];           
   bool isWriteProtected;                /** Tell if Write protection is enabled (Works on some registers) */
   sc_time lastCounterUpdate;            /** Indicates the last simulation instant when the counter had been updated */
 };

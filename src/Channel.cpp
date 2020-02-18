@@ -165,7 +165,7 @@ void Channel::set_pmc_clock(const struct pmc_data &pmcData)
   update_counter_value();
 
   // Copy data into internal variables
-  memcpy(&(this->curPmcData), &pmcData, sizeof(struct pmc_data));
+  memcpy(&(this->clk->curPmcData), &pmcData, sizeof(struct pmc_data));
 
   // Update the divided clock value
   update_counter_clock();
@@ -178,27 +178,27 @@ void Channel::update_counter_clock(void)
 {
   switch (registerData[TC_CMR_I] & TC_CMRx_TCCLKS) {
     case 0:
-      this->counterClockFreqHz = this->curPmcData.mck / 2;
+      this->clk->generated_clock = this->clk->curPmcData.mck / 2;
       break;
 
     case 1:
-      this->counterClockFreqHz = this->curPmcData.mck / 8;
+      this->clk->generated_clock = this->clk->curPmcData.mck / 8;
       break;
 
     case 2:
-      this->counterClockFreqHz = this->curPmcData.mck / 32;
+      this->clk->generated_clock = this->clk->curPmcData.mck / 32;
       break;
 
     case 3:
-      this->counterClockFreqHz = this->curPmcData.mck / 128;
+      this->clk->generated_clock = this->clk->curPmcData.mck / 128;
       break;
 
     case 4:
-      this->counterClockFreqHz = this->curPmcData.slck;
+      this->clk->generated_clock = this->clk->curPmcData.slck;
       break;
 
     default:
-      this->counterClockFreqHz = 0; // Turned off
+      this->clk->generated_clock = 0; // Turned off
       fprintf(stderr, "Channel::generated_clock_update() \
         Ignoring clock choice (XC0, XC1 and XC2 not supported)\n");
       break;
@@ -220,7 +220,7 @@ void Channel::update_counter_value(void)
   delta = sc_time_stamp() - lastCounterUpdate;
 
   // Compute delta value in count cycle
-  deltaCount = floor(this->counterClockFreqHz * delta.to_seconds());
+  deltaCount = floor(this->clk->generated_clock * delta.to_seconds());
 
   // Apply
   counterValue = registerData[TC_CV_I];
@@ -284,6 +284,6 @@ void Channel::set_clock_enable(bool isEnabled)
   }
 }
 
-
-
+void Channel::initInterrupt(void *interruptMethod) {
+    mInterruptMethod = interruptMethod;
 
