@@ -173,54 +173,54 @@ int Timer::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
           
         }
         if (registerData[TC_BMR_I] & TC_BMR_SPEEDEN){
-          
+          //Not used in waveform mode
         }else{
           
         }
 
         if (registerData[TC_BMR_I] & TC_BMR_QDTRANS){
-          
+          //Not used in waveform mode
         }
         else{
           
         }
 
         if (registerData[TC_BMR_I] & TC_BMR_EDGPHA){
-          
+          //Not used in waveform mode
         }
         else{
-          
+
         }
 
         if (registerData[TC_BMR_I] & TC_BMR_INVA){
-          
+          //Not used in waveform mode
         }
         else{
           
         }
 
         if (registerData[TC_BMR_I] & TC_BMR_INVB){
-          
+          //Not used in waveform mode
         }
         else{
           
         }
 
         if (registerData[TC_BMR_I] & TC_BMR_INVIDX){
-          
+          //Not used in waveform mode
         }
         else{
           
         }
 
         if (registerData[TC_BMR_I] & TC_BMR_SWAP){
-          
+          //Not used in waveform mode
         }
         else{
-          
+
         }
         if (registerData[TC_BMR_I] & TC_BMR_IDXPHB){
-
+          //Not used in waveform mode
         }
         else{
           
