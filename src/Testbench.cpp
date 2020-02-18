@@ -149,6 +149,7 @@ int Testbench::test_timer_configuration(void) {
   printf("> BEGIN TIMER CONFIGURATION\n");
 
   
+  // clock configuration
   if (set_clock_enable(0, false)) {
     SC_REPORT_ERROR("Testbench::set_clock_enable()", "Can't disable the clock");
   }
@@ -160,8 +161,6 @@ int Testbench::test_timer_configuration(void) {
   if (tmp & TC_SR_CLKSTA != 1) {
     SC_REPORT_ERROR("Testbench::set_clock_enable()", "Unable to reset the clock on T0");
   }
-
-
 
   if (set_clock_enable(0, true)) {
     SC_REPORT_ERROR("Testbench::set_clock_enable()", "Can't enable the clock");
@@ -175,11 +174,23 @@ int Testbench::test_timer_configuration(void) {
     SC_REPORT_ERROR("Testbench::set_clock_enable()", "Unable to set the clock on T0");
   }
 
+  // mode configuration
+  if (timer0_write_byte(TC_CMR, TC_CMRx_WAVE)) {
+      SC_REPORT_ERROR("Testbench::set_clock_enable()", "Unable to write at T0@CH0@CMR");
+  }
+  // Read mask
+  if (timer0_read_byte(TC_CMR, &tmp)) {
+    SC_REPORT_ERROR("Testbench::set_clock_enable()", "Unable to read at T0@CMR");
+  }
+  // Test value
+  if (tmp & TC_CMRx_WAVE != 0) {
+    SC_REPORT_ERROR("Testbench::set_clock_enable()", "Unable to set waveform mode T0");
+  }
+
 
   printf("> TIMER CONFIGURATION: PASSED\n");
   return 0;
 }
-
 
 
 int Testbench::test_timer_address(void) {
@@ -277,7 +288,7 @@ int Testbench::test_interruption(void)
       SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to reset the interruption on T0");
     }
   }
-  printf("Timer interuption OK\n");
+  printf("Timer interruption OK\n");
 
   for (int i = 0; i < sizeof(interChannelArray) / sizeof(uint32_t); ++i) {
     // Enable interrupt
@@ -305,7 +316,7 @@ int Testbench::test_interruption(void)
       SC_REPORT_ERROR("Testbench::test_interruption()", "Unable to reset the interruption on T0@CH0");
     }
   }
-  printf("Channel interuption OK\n");
+  printf("Channel interruption OK\n");
 
   printf("> INTERRUPTION: PASSED\n");
   return 0;
