@@ -24,6 +24,10 @@ private:
   tlm_utils::simple_initiator_socket<Testbench> pmcSocket;
   tlm_utils::simple_initiator_socket<Testbench> busSocket;
 
+  tlm_utils::simple_target_socket<Testbench> tioSockets[CHANNEL_COUNT];
+
+  struct socket_tio_data_t tioData[CHANNEL_COUNT];
+
 /**
  * SOCKET API
  */
@@ -40,6 +44,11 @@ private:
 
   int timer0_read_byte(uint32_t address, uint32_t *value);
   int timer0_write_byte(uint32_t address, uint32_t value);
+
+/**
+ * PIO MANAGEMENT
+ */
+void b_transport_tio(tlm_generic_payload& trans, sc_time& delay);
 
 /**
  * FUNCTIONNAL API

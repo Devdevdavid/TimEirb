@@ -4,18 +4,19 @@
  * Public methods
  */
 
-Channel::Channel(sc_module_name name) : sc_module(name)
+Channel::Channel(sc_module_name name) : sc_module(name), tioSocket("TioSocket")
 {
     memset(this->registerData, 0, sizeof(registerData));  // Reset value of internal registers
     memset(&this->curPmcData, 0, sizeof(struct pmc_data));// Reset value of PMC data
+    memset(&this->curTioData, 0, sizeof(struct socket_tio_data_t));// Reset value of TIO data
 
+    this->channelId = 0;                                  // The timer gives the ID with set_channel_id()
     this->counterClockFreqHz = 0;                         // Clock is disabled at reset
     this->isWriteProtected = false;                       // Write protection is disabled at reset
     this->lastCounterUpdate = SC_ZERO_TIME;               // Last update is at 0 sec
     this->mInterruptMethod = NULL;                        // No interrupt method yet
 
     //interrupt
-  
     SC_THREAD(counter_overflow);
     SC_THREAD(load_overrun);
     SC_THREAD(RA_compare);
@@ -23,7 +24,6 @@ Channel::Channel(sc_module_name name) : sc_module(name)
     SC_THREAD(RC_compare);
     SC_THREAD(RA_loading);
     SC_THREAD(RB_loading);
-
 }
 
 /**
@@ -68,11 +68,11 @@ int Channel::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
       update_counter_clock(registerData[TC_CMR_I] & TC_CMRx_TCCLKS);
         // TC_CMRw_CPCSTOP changed
         if((*pData) & TC_CMRw_CPCSTOP){
-          set_clock_enable(false);    
+          set_clock_enable(false);
         }
         // TC_CMRw_CPCDIS changed
         if((*pData) & TC_CMRw_CPCDIS){
-          set_clock_enable(false);    
+          set_clock_enable(false);
         }
         // TC_CMRw_EEVTEDG changed
         if((*pData) & TC_CMRw_ENETRG){
@@ -214,6 +214,11 @@ int Channel::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
   return 0;
 }
 
+void Channel::set_channel_id(uint8_t channelId)
+{
+  this->channelId = channelId;
+}
+
 void Channel::set_write_protection(bool isEnabled)
 {
   this->isWriteProtected = isEnabled;
@@ -299,6 +304,29 @@ void Channel::update_counter_value(void)
 
 void Channel::tio_update(void)
 {
+  int ret = 0;
+  sc_time delay = sc_time(0, SC_NS);
+  tlm_generic_payload *trans = new tlm_generic_payload;
+
+  trans->set_address(this->channelId);        // Identify the channel for the testbench
+  trans->set_data_ptr((uint8_t *) &curTioData);
+  trans->set_data_length(sizeof(struct socket_tio_data_t));
+  trans->set_response_status(TLM_INCOMPLETE_RESPONSE);
+
+  // Send it !
+  this->tioSocket->b_transport(*trans, delay);
+
+  // Print error condition
+  if (trans->is_response_error()) {
+    char rwChar = (trans->get_command() == TLM_READ_COMMAND) ? 'R' : 'W';
+    //fprintf(stderr, "Testbench::socket_action() %c@0x%04X L=%dB\n", rwChar, trans->get_address(), trans->get_data_length());
+  }
+
+  if (trans->is_response_error()) {
+    fprintf(stderr, "Channel::tio_update() Transaction failed: %s\n", trans->get_response_string().c_str());
+  }
+
+  delete (trans);
 }
 
 void Channel::get_tioa(struct tio_t tioa)
@@ -333,7 +361,7 @@ void Channel::set_clock_enable(bool isEnabled)
   }
 }
 
- void Channel::init_interrupt(void *interruptMethod) 
+ void Channel::init_interrupt(void *interruptMethod)
  {
      mInterruptMethod = interruptMethod;
  }

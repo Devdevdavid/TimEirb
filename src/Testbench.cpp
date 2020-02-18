@@ -2,10 +2,16 @@
 #include "Tools.h"
 
 Testbench::Testbench(sc_module_name name) : sc_module(name), pmcSocket("pmcSocket"), busSocket("busSocket") {
-  timer1 = new Timer("Timer1", TIMER0_BASE_ADDR);
+  timer1 = new Timer("Timer1");
+  timer1->set_base_address(TIMER0_BASE_ADDR);
 
   pmcSocket.bind(timer1->socketPMC);
   busSocket.bind(timer1->socketBus);
+
+  for (int i = 0; i < CHANNEL_COUNT; ++i) {
+    timer1->channels[i]->tioSocket.bind(tioSockets[i]);
+    tioSockets[i].register_b_transport(this, &Testbench::b_transport_tio);
+  }
 
   SC_THREAD(main_test);
 }
@@ -106,6 +112,46 @@ int Testbench::timer0_read_byte(uint32_t address, uint32_t *value) {
 
 int Testbench::timer0_write_byte(uint32_t address, uint32_t value) {
   return bus_write_byte(TIMER0_BASE_ADDR + address, value);
+}
+
+/********************************************************
+ *            PIO MANAGEMENT
+ ********************************************************/
+
+void Testbench::b_transport_tio(tlm_generic_payload& trans, sc_time& delay)
+{
+    uint8_t channelId = trans.get_address();
+    struct socket_tio_data_t *tioData;
+
+    // The only data valid is a struct pmc_data, check length
+    if (trans.get_data_length() != sizeof(struct socket_tio_data_t)) {
+      trans.set_response_status(TLM_BURST_ERROR_RESPONSE);
+      return;
+    }
+
+    // Cast and check the pointer
+    tioData = (struct socket_tio_data_t *) trans.get_data_ptr();
+    if (tioData == NULL) {
+      trans.set_response_status(TLM_GENERIC_ERROR_RESPONSE);
+      return;
+    }
+
+    // Check channel Id
+    if (channelId >= CHANNEL_COUNT) {
+      trans.set_response_status(TLM_BURST_ERROR_RESPONSE);
+      return;
+    }
+
+    // Save the given value
+    memcpy(&(this->tioData[channelId]), tioData, sizeof(struct socket_tio_data_t));
+
+    cout << "New TIO value for channel " << to_string(channelId) << endl;
+    cout << "TIOA Freq = " << this->tioData[channelId].tioA.clockFrequency << endl;
+    cout << "TIOA Duty = " << this->tioData[channelId].tioA.dutyCycle << endl;
+    cout << "TIOB Freq = " << this->tioData[channelId].tioB.clockFrequency << endl;
+    cout << "TIOB Duty = " << this->tioData[channelId].tioB.dutyCycle << endl;
+
+    trans.set_response_status(TLM_OK_RESPONSE);
 }
 
 /********************************************************

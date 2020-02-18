@@ -6,7 +6,7 @@
  * Public methods
  */
 
-Timer::Timer(sc_module_name name, uint32_t baseAddress) :
+Timer::Timer(sc_module_name name) :
               sc_module(name),
               socketPMC("socketPMC"),
               socketBus("socketBus") {
@@ -21,6 +21,7 @@ Timer::Timer(sc_module_name name, uint32_t baseAddress) :
   for (int i = 0; i < CHANNEL_COUNT; ++i) {
     string name = "Channel" + to_string(i);
     channels[i] = new Channel(name.c_str());
+    channels[i]->set_channel_id(i);
   }
 
   // Link sockets
@@ -31,12 +32,6 @@ Timer::Timer(sc_module_name name, uint32_t baseAddress) :
 void Timer::b_transport_pcm(tlm_generic_payload& trans, sc_time& delay)
 {
     struct pmc_data *pmcData;
-
-    // We support only write command on this socket
-    if (trans.get_command() != TLM_WRITE_COMMAND) {
-        trans.set_response_status(TLM_COMMAND_ERROR_RESPONSE);
-        return;
-    }
 
     // The only data valid is a struct pmc_data, check length
     if (trans.get_data_length() != sizeof(struct pmc_data)) {
@@ -121,6 +116,11 @@ void Timer::b_transport_bus(tlm_generic_payload& trans, sc_time& delay)
   trans.set_response_status(TLM_OK_RESPONSE);
 }
 
+void Timer::set_base_address(uint32_t baseAddress)
+{
+  this->baseAddress = baseAddress;
+}
+
 /**
  * Private methods
  */
@@ -170,19 +170,19 @@ int Timer::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
           //Not used in waveform mode
         }
         else{
-          
+
         }
         if (registerData[TC_BMR_I] & TC_BMR_SPEEDEN){
           //Not used in waveform mode
         }else{
-          
+
         }
 
         if (registerData[TC_BMR_I] & TC_BMR_QDTRANS){
           //Not used in waveform mode
         }
         else{
-          
+
         }
 
         if (registerData[TC_BMR_I] & TC_BMR_EDGPHA){
@@ -196,21 +196,21 @@ int Timer::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
           //Not used in waveform mode
         }
         else{
-          
+
         }
 
         if (registerData[TC_BMR_I] & TC_BMR_INVB){
           //Not used in waveform mode
         }
         else{
-          
+
         }
 
         if (registerData[TC_BMR_I] & TC_BMR_INVIDX){
           //Not used in waveform mode
         }
         else{
-          
+
         }
 
         if (registerData[TC_BMR_I] & TC_BMR_SWAP){
@@ -223,9 +223,9 @@ int Timer::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
           //Not used in waveform mode
         }
         else{
-          
+
         }
-        
+
         maxfilt = (registerData[TC_BMR_I] & TC_BMR_MAXFILT)>>20;
 
       }

@@ -89,9 +89,10 @@ SC_MODULE(Timer)
  * Public methods
  */
 public:
-	Timer(sc_module_name name, uint32_t baseAddress);
+	SC_CTOR(Timer);
 	void b_transport_pcm(tlm_generic_payload& trans, sc_time& delay);
 	void b_transport_bus(tlm_generic_payload& trans, sc_time& delay);
+	void set_base_address(uint32_t baseAddress);
 
 /**
  * Private methods
@@ -107,13 +108,13 @@ private:
 public:
 	tlm_utils::simple_target_socket<Timer> socketPMC;
 	tlm_utils::simple_target_socket<Timer> socketBus;
+	Channel *channels[CHANNEL_COUNT];					/** Array of channels */
 
 /**
  * Private attributes
  */
 private:
 	uint32_t baseAddress;
-	Channel *channels[CHANNEL_COUNT];			/** Array of channels */
 	struct pmc_data curPmcData;					/** Last data received from PMC module */
 	uint32_t registerData[TC_REG_COUNT];		/** Value of all the internal regsiters */
 	bool isWriteProtected;						/** Tell if Write protection is enabled (Works on some registers) */

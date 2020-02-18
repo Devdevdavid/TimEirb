@@ -126,6 +126,11 @@ struct tio_t {
   uint16_t dutyCycle;
 };
 
+struct socket_tio_data_t {
+  struct tio_t tioA;
+  struct tio_t tioB;
+};
+
 SC_MODULE(Channel) {
   /*
    * public methods
@@ -133,6 +138,7 @@ SC_MODULE(Channel) {
 public:
   SC_CTOR(Channel);
   int manage_register(uint8_t cmd, uint32_t address, uint32_t *pData);
+  void set_channel_id(uint8_t channelId);
   void set_write_protection(bool isEnabled);
   void set_pmc_clock(const struct pmc_data &pmcData);
 
@@ -162,9 +168,16 @@ private:
   void RB_loading();
 
   /*
+   * Public members
+   */
+public:
+  tlm_utils::simple_initiator_socket<Channel> tioSocket; /** Socket used to communicate TIO to Testbench */
+
+  /*
    * private members
    */
 private:
+  uint8_t channelId;                    /** Channel index to allow the channel to identify itself */
   uint32_t registerData[TCC_REG_COUNT]; /** Register value of the channel */
   struct pmc_data curPmcData;           /** Local copy of pmcData given by the Timer */
   uint32_t counterClockFreqHz;          /** The value in hertz of the divided channel clock (0 means turned off) */
@@ -172,6 +185,8 @@ private:
   bool isWriteProtected;                /** Tell if Write protection is enabled (Works on some registers) */
   sc_time lastCounterUpdate;            /** Indicates the last simulation instant when the counter had been updated */
   uint8_t waveformSelection;
+  struct socket_tio_data_t curTioData;  /** Current value of the TIOA and TIOB */
+
 
   //interrupt signal reset
   sc_event cnt_ovf;
