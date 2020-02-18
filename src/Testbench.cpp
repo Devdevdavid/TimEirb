@@ -134,7 +134,7 @@ int Testbench::set_write_protection(bool isEnabled)
 int Testbench::set_clock_enable(uint8_t channelId, bool isEnabled)
 {
   uint32_t value = (isEnabled) ? TC_CCR_CLKEN : TC_CCR_CLKDIS;
-  
+
   return timer0_write_byte(channelId * TIMER_CHANNEL_ADDR_SPACE + TC_CCR, value);
 }
 
@@ -143,12 +143,13 @@ int Testbench::set_clock_enable(uint8_t channelId, bool isEnabled)
  ********************************************************/
 
 
-int Testbench::test_timer_configuration(void) {
+int Testbench::test_timer_configuration(void)
+{
   uint32_t tmp;
 
   printf("> BEGIN TIMER CONFIGURATION\n");
 
-  
+
   // clock configuration
   if (set_clock_enable(0, false)) {
     SC_REPORT_ERROR("Testbench::set_clock_enable()", "Can't disable the clock");
