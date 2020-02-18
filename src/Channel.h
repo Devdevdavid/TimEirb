@@ -160,12 +160,9 @@ private:
 
   //interrupt function
   void counter_overflow();
-  void load_overrun();
   void RA_compare();
   void RB_compare();
   void RC_compare();
-  void RA_loading();
-  void RB_loading();
 
   /*
    * Public members
@@ -190,12 +187,9 @@ private:
 
   //interrupt signal reset
   sc_event cnt_ovf;
-  sc_event ld_ovr;
   sc_event ra_comp;
   sc_event rb_comp;
   sc_event rc_comp;
-  sc_event ra_ld;
-  sc_event rb_ld;
 
   void *mInterruptMethod;
 };
