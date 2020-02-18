@@ -13,6 +13,17 @@ Channel::Channel(sc_module_name name) : sc_module(name)
     this->isWriteProtected = false;                       // Write protection is disabled at reset
     this->lastCounterUpdate = SC_ZERO_TIME;               // Last update is at 0 sec
     this->mInterruptMethod = NULL;                        // No interrupt method yet
+
+    //interrupt
+  
+    SC_THREAD(counter_overflow);
+    SC_THREAD(load_overrun);
+    SC_THREAD(RA_compare);
+    SC_THREAD(RB_compare);
+    SC_THREAD(RC_compare);
+    SC_THREAD(RA_loading);
+    SC_THREAD(RB_loading);
+
 }
 
 /**
@@ -171,6 +182,9 @@ int Channel::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
 
       // Enable bits only if they are in the mask
       registerData[TC_IMR_I] |= (*pData) & TC_IxR_Mask;
+
+      //update Interrupt enable
+      update_interrupt_thread();
       break;
 
     case TC_IDR:               /** Disable interrupts */
@@ -178,6 +192,9 @@ int Channel::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
 
       // Disable bits only if they are in the mask
       registerData[TC_IMR_I] &= ~((*pData) & TC_IxR_Mask);
+
+      //update Interupt event
+      update_interrupt_thread();
       break;
 
     case TC_IMR:               /** Interrupt mask */
@@ -273,21 +290,6 @@ void Channel::update_counter_value(void)
     counterValue += deltaCount;
   }
 
-  if (counterValue < 0) {
-    // Modulo
-    while (counterValue < 0) { counterValue += UINT32_MAX; }
-
-    // Trigger Overflow interrupt
-    registerData[TC_SR_I] |= TC_SR_COVFS;
-  }
-  else if (counterValue > UINT32_MAX) {
-    // Modulo
-    while (counterValue > UINT32_MAX) { counterValue -= UINT32_MAX; }
-
-    // Trigger Overflow interrupt
-    registerData[TC_SR_I] |= TC_SR_COVFS;
-  }
-
   // Save new value
   registerData[TC_CV_I] = counterValue;
 
@@ -331,7 +333,19 @@ void Channel::set_clock_enable(bool isEnabled)
   }
 }
 
+ void Channel::init_interrupt(void *interruptMethod) 
+ {
+     mInterruptMethod = interruptMethod;
+ }
 
-// void Channel::initInterrupt(void *interruptMethod) {
-//     mInterruptMethod = interruptMethod;
-// }
+ void Channel::update_interrupt_thread()
+ {
+ }
+
+  void Channel::counter_overflow() {}
+  void Channel::load_overrun() {}
+  void Channel::RA_compare() {}
+  void Channel::RB_compare() {}
+  void Channel::RC_compare() {}
+  void Channel::RA_loading() {}
+  void Channel::RB_loading() {}
