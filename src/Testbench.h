@@ -5,6 +5,7 @@
 #include "tlm_head.h"
 
 // MODULES
+#include "pmc_simulator.h"
 #include "Timer.h"
 
 SC_MODULE(Testbench) {
@@ -18,6 +19,7 @@ public:
  * Private attributes
  */
 private:
+  //PmcSimulator *pmcSimulator;
   Timer *timer1;
   tlm_utils::simple_initiator_socket<Testbench> pmcSocket;
   tlm_utils::simple_initiator_socket<Testbench> busSocket;

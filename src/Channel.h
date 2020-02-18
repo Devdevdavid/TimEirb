@@ -150,6 +150,16 @@ private:
   void update_counter_clock(uint8_t TCCLKSValue);
   void reset_counter(void);
   void set_clock_enable(bool isEnabled);
+  void update_interrupt_thread();
+
+  //interrupt function
+  void counter_overflow();
+  void load_overrun();
+  void RA_compare();
+  void RB_compare();
+  void RC_compare();
+  void RA_loading();
+  void RB_loading();
 
   /*
    * private members
@@ -162,6 +172,16 @@ private:
   bool isWriteProtected;                /** Tell if Write protection is enabled (Works on some registers) */
   sc_time lastCounterUpdate;            /** Indicates the last simulation instant when the counter had been updated */
   uint8_t waveformSelection;
+
+  //interrupt signal reset
+  sc_event cnt_ovf;
+  sc_event ld_ovr;
+  sc_event ra_comp;
+  sc_event rb_comp;
+  sc_event rc_comp;
+  sc_event ra_ld;
+  sc_event rb_ld;
+
   void *mInterruptMethod;
 };
 

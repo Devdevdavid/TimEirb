@@ -135,12 +135,16 @@ void Timer::b_transport_bus(tlm_generic_payload& trans, sc_time& delay)
  */
 int Timer::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
 {
+  int maxfilt=0;
   switch (address) {
     case TC_BCR:                /** Block control */
       _is_write_only_();
 
       if ((*pData) & TC_BCR_SYNC) {
-        // Do sync
+        // Sync all channels
+        for (int i = 0; i < CHANNEL_COUNT; ++i) {
+          //channels[i]->set_sync();//décommenter si réalisé dans channel
+        }
       }
       break;
 
@@ -150,6 +154,80 @@ int Timer::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
       } else {
         _need_wpen_();
         registerData[TC_BMR_I] = (*pData) & TC_BMR_Mask;
+        //TC_BMR_TC0XC0S, TC_BMR_TC1XC1S, TC_BMR_TC2XC2S not used
+
+        if (registerData[TC_BMR_I] & TC_BMR_QDEN){
+          if ((registerData[TC_BMR_I] & TC_BMR_POSEN) || (registerData[TC_BMR_I] & TC_BMR_SPEEDEN)){
+            //enable QDEC
+            //Not used in waveform mode
+          }
+        }
+        else{
+
+        }
+
+        if (registerData[TC_BMR_I] & TC_BMR_POSEN){
+          //Not used in waveform mode
+        }
+        else{
+          
+        }
+        if (registerData[TC_BMR_I] & TC_BMR_SPEEDEN){
+          
+        }else{
+          
+        }
+
+        if (registerData[TC_BMR_I] & TC_BMR_QDTRANS){
+          
+        }
+        else{
+          
+        }
+
+        if (registerData[TC_BMR_I] & TC_BMR_EDGPHA){
+          
+        }
+        else{
+          
+        }
+
+        if (registerData[TC_BMR_I] & TC_BMR_INVA){
+          
+        }
+        else{
+          
+        }
+
+        if (registerData[TC_BMR_I] & TC_BMR_INVB){
+          
+        }
+        else{
+          
+        }
+
+        if (registerData[TC_BMR_I] & TC_BMR_INVIDX){
+          
+        }
+        else{
+          
+        }
+
+        if (registerData[TC_BMR_I] & TC_BMR_SWAP){
+          
+        }
+        else{
+          
+        }
+        if (registerData[TC_BMR_I] & TC_BMR_IDXPHB){
+
+        }
+        else{
+          
+        }
+        
+        maxfilt = (registerData[TC_BMR_I] & TC_BMR_MAXFILT)>>20;
+
       }
       break;
 
@@ -176,9 +254,9 @@ int Timer::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
 
     case TC_QISR:               /** Active interrupts */
       _is_read_only_();
-
       // Mask all disabled interrupts
       (*pData) = registerData[TC_QISR_I] & registerData[TC_QIMR_I] & TC_QIxR_Mask;
+      this->registerData[TC_QISR] = 0;
       break;
 
     case TC_FMR:                /** Fault mode */
@@ -188,7 +266,20 @@ int Timer::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
         _need_wpen_();
 
         // Write only bits in the mask
-        this->registerData[TC_FMR_I] = (*pData) & TC_FMR_Mask;
+        registerData[TC_FMR_I] = (*pData) & TC_FMR_Mask;
+
+        //Not used for the moment
+        if (registerData[TC_FMR_I] & TC_FMR_ENCF0){
+
+        }else
+        {
+
+        }
+        if (registerData[TC_FMR_I] & TC_FMR_ENCF1){
+
+        }else{
+
+        }
       }
       break;
 
@@ -197,7 +288,7 @@ int Timer::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
         (*pData) = registerData[TC_WPMR_I];
       } else {
         // Save only the WPEN bit (not the password!)
-        this->registerData[TC_WPMR_I] = (*pData) & TC_WPMR_WPEN;
+        registerData[TC_WPMR_I] = (*pData) & TC_WPMR_WPEN;
 
         // Is the password ok ?
         if (((*pData) >> 8) == TC_WPMR_PASSWORD) {
@@ -234,14 +325,5 @@ void Timer::set_write_protection(bool isEnabled)
   for (int i = 0; i < CHANNEL_COUNT; ++i) {
     channels[i]->set_write_protection(isEnabled);
   }
+
 }
-
-
-
-
-
-
-
-
-
-
