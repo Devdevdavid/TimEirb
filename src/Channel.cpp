@@ -6,8 +6,13 @@
 
 Channel::Channel(sc_module_name name) : sc_module(name)
 {
-    this->isWriteProtected = false;                       // Write protection is disabled at reset
     memset(this->registerData, 0, sizeof(registerData));  // Reset value of internal registers
+    memset(&this->curPmcData, 0, sizeof(struct pmc_data));// Reset value of PMC data
+
+    this->counterClockFreqHz = 0;                         // Clock is disabled at reset
+    this->isWriteProtected = false;                       // Write protection is disabled at reset
+    this->lastCounterUpdate = SC_ZERO_TIME;               // Last update is at 0 sec
+    this->mInterruptMethod = NULL;                        // No interrupt method yet
 }
 
 /**
