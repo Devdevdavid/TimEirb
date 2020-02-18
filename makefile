@@ -14,7 +14,7 @@ else
     endif
 endif
 
-CPPFLAGS = -I ./src -I $(SYSTEMC)/include -Wno-deprecated -O0
+CPPFLAGS = -I ./src -I ./test -I $(SYSTEMC)/include -Wno-deprecated -O0
 SYSTEMC := /to/be/defined/systemc-2.3.3
 LDLIBS += -L.
 
@@ -32,10 +32,10 @@ david: all
 aurelien: SYSTEMC := /net/s/atrompat/Documents/3A/sysC_intall/systemc-2.3.3
 aurelien: all
 
-guillaume: SYSTEMC := /net/s/ddevant/lib/systemc-2.3.3
+guillaume: SYSTEMC := /net/s/gchene/Documents/SystemC/systemc-2.3.3/systemc-2.3.3
 guillaume: all
 
-ophelie: SYSTEMC := /net/s/ddevant/lib/systemc-2.3.3
+ophelie: SYSTEMC := /home/ophelie/Prog/SystemC/systemc-2.3.3
 ophelie: all
 
 quentin: SYSTEMC := /net/s/qgales/systemc-2.3.3

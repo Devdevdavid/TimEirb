@@ -53,9 +53,30 @@ int Channel::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
       } else {
         _need_wpen_();
         registerData[TC_CMR_I] = (*pData) & TC_CMRx_Mask;
-
         // TCCLKS changed
-        update_counter_clock();
+      update_counter_clock(registerData[TC_CMR_I] & TC_CMRx_TCCLKS);
+        // TC_CMRw_CPCSTOP changed
+        if((*pData) & TC_CMRw_CPCSTOP){
+          set_clock_enable(false);    
+        }
+        // TC_CMRw_CPCDIS changed
+        if((*pData) & TC_CMRw_CPCDIS){
+          set_clock_enable(false);    
+        }
+        // TC_CMRw_EEVTEDG changed
+        if((*pData) & TC_CMRw_ENETRG){
+          reset_counter();
+          set_clock_enable(true);
+        }
+        // TC_CMRw_WAVSEL changed
+        if((*pData) & TC_CMRw_WAVSEL){
+          //update_interrupt_thread();
+          waveformSelection = ((*pData) & TC_CMRw_WAVSEL);
+        }
+        // TC_CMRw_WAVE changed
+        if ((*pData) & TC_CMRx_WAVE == 0) {
+          return -1;
+        }
       }
       break;
 
@@ -65,8 +86,10 @@ int Channel::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
       } else {
         _need_wpen_();
         registerData[TC_SMMR_I] = (*pData) & TC_SMMR_Mask;
+        if((*pData) & TC_SMMR_GCEN) {
+          set_clock_enable(true);
+        }
       }
-
       break;
 
     case TC_CV:               /** Value */
@@ -117,6 +140,21 @@ int Channel::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
 
     case TC_SR:               /** Status */
       _is_read_only_();
+
+      // Read TC_SR_COVFS
+      (*pData) = registerData[TC_SR_I] & (TC_SR_COVFS);
+
+      // Read TC_SR_LOVRS
+      (*pData) = registerData[TC_SR_I] & (TC_SR_LOVRS);
+
+      // Read TC_SR_LDRAS
+      (*pData) = registerData[TC_SR_I] & (TC_SR_LDRAS);
+
+      // Read TC_SR_LDRBS
+      (*pData) = registerData[TC_SR_I] & (TC_SR_LDRBS);
+
+      // Read TC_SR_ETRGS
+      (*pData) = registerData[TC_SR_I] & (TC_SR_ETRGS);
 
       // Read other status
       (*pData) = registerData[TC_SR_I] & (TC_SR_MTIOB | TC_SR_MTIOA | TC_SR_CLKSTA);
@@ -173,15 +211,15 @@ void Channel::set_pmc_clock(const struct pmc_data &pmcData)
   memcpy(&(this->curPmcData), &pmcData, sizeof(struct pmc_data));
 
   // Update the divided clock value
-  update_counter_clock();
+  update_counter_clock(registerData[TC_CMR_I] & TC_CMRx_TCCLKS);
 }
 
 /*
 * private methods
 */
-void Channel::update_counter_clock(void)
+void Channel::update_counter_clock(uint8_t TCCLKSValue)
 {
-  switch (registerData[TC_CMR_I] & TC_CMRx_TCCLKS) {
+  switch (TCCLKSValue) {
     case 0:
       this->counterClockFreqHz = this->curPmcData.mck / 2;
       break;
@@ -265,6 +303,10 @@ void Channel::get_tioa(struct tio_t tioa)
 {
 }
 
+void Channel::get_tiob(struct tio_t tiob)
+{
+}
+
 void Channel::reset_counter(void)
 {
   set_clock_enable(true);
@@ -288,6 +330,7 @@ void Channel::set_clock_enable(bool isEnabled)
     registerData[TC_SR_I] &= ~TC_SR_CLKSTA;
   }
 }
+
 
 // void Channel::initInterrupt(void *interruptMethod) {
 //     mInterruptMethod = interruptMethod;
