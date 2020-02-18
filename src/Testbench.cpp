@@ -144,11 +144,37 @@ int Testbench::set_clock_enable(uint8_t channelId, bool isEnabled)
 
 
 int Testbench::test_timer_configuration(void) {
+  uint32_t tmp;
+
   printf("> BEGIN TIMER CONFIGURATION\n");
+
+  
+  if (set_clock_enable(0, false)) {
+    SC_REPORT_ERROR("Testbench::set_clock_enable()", "Can't disable the clock");
+  }
+  // Read mask
+  if (timer0_read_byte(TC_SR, &tmp)) {
+    SC_REPORT_ERROR("Testbench::set_clock_enable()", "Unable to read at T0@SR0");
+  }
+  // Test value
+  if (tmp & TC_SR_CLKSTA != 1) {
+    SC_REPORT_ERROR("Testbench::set_clock_enable()", "Unable to reset the clock on T0");
+  }
+
+
 
   if (set_clock_enable(0, true)) {
     SC_REPORT_ERROR("Testbench::set_clock_enable()", "Can't enable the clock");
   }
+  // Read mask
+  if (timer0_read_byte(TC_SR, &tmp)) {
+    SC_REPORT_ERROR("Testbench::set_clock_enable()", "Unable to read at T0@SR0");
+  }
+  // Test value
+  if (tmp & TC_SR_CLKSTA != 0) {
+    SC_REPORT_ERROR("Testbench::set_clock_enable()", "Unable to set the clock on T0");
+  }
+
 
   printf("> TIMER CONFIGURATION: PASSED\n");
   return 0;
