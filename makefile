@@ -29,7 +29,7 @@ none:
 david: SYSTEMC := /Users/David/Documents/tmp/systemc-2.3.3
 david: all
 
-aurelien: SYSTEMC := /net/s/ddevant/lib/systemc-2.3.3
+aurelien: SYSTEMC := /net/s/atrompat/Documents/3A/sysC_intall/systemc-2.3.3
 aurelien: all
 
 guillaume: SYSTEMC := /net/s/ddevant/lib/systemc-2.3.3
