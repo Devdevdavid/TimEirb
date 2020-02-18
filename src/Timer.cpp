@@ -176,9 +176,9 @@ int Timer::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
 
     case TC_QISR:               /** Active interrupts */
       _is_read_only_();
-
       // Mask all disabled interrupts
       (*pData) = registerData[TC_QISR_I] & registerData[TC_QIMR_I] & TC_QIxR_Mask;
+      this->registerData[TC_QISR] = 0;
       break;
 
     case TC_FMR:                /** Fault mode */
@@ -235,13 +235,3 @@ void Timer::set_write_protection(bool isEnabled)
     channels[i]->set_write_protection(isEnabled);
   }
 }
-
-
-
-
-
-
-
-
-
-
