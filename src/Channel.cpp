@@ -53,10 +53,38 @@ int Channel::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
       } else {
         _need_wpen_();
         registerData[TC_CMR_I] = (*pData) & TC_CMRx_Mask;
-
         // TCCLKS changed
-        update_counter_clock();
-      }
+        update_counter_clock(registerData[TC_CMR_I] & TC_CMRx_TCCLKS);
+        }
+        // CLKI changed
+
+        // TC_CMRx_WAVE changed
+        if((*pData) & TC_CMRx_WAVE){
+          //A VOIR MAIS PROBABLE INUTILE
+        }
+        
+        // TC_CMRw_CPCSTOP changed
+        if((*pData) & TC_CMRw_CPCSTOP){
+          set_clock_enable(false);    
+        }
+        // TC_CMRw_CPCDIS changed
+        if((*pData) & TC_CMRw_CPCDIS){
+          set_clock_enable(false);    
+        }
+        // TC_CMRw_EEVTEDG changed
+        if((*pData) & TC_CMRw_ENETRG){
+          reset_counter();
+          set_clock_enable(true);
+        }
+        // TC_CMRw_WAVSEL changed
+        if((*pData) & TC_CMRw_WAVSEL){
+          //update_interrupt_thread();
+          waveformSelection = ((*pData) & TC_CMRw_WAVSEL);
+        }
+        // TC_CMRw_WAVE changed
+        if ((*pData) & TC_CMRx_WAVE == 0) {
+          return -1;
+        }
       break;
 
     case TC_SMMR:             /** Mode Motor */
@@ -65,6 +93,9 @@ int Channel::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
       } else {
         _need_wpen_();
         registerData[TC_SMMR_I] = (*pData) & TC_SMMR_Mask;
+      }
+      if((*pData) & TC_SMMR_GCEN) {
+        set_clock_enable(true);
       }
 
       break;
@@ -173,15 +204,15 @@ void Channel::set_pmc_clock(const struct pmc_data &pmcData)
   memcpy(&(this->curPmcData), &pmcData, sizeof(struct pmc_data));
 
   // Update the divided clock value
-  update_counter_clock();
+  update_counter_clock(registerData[TC_CMR_I] & TC_CMRx_TCCLKS);
 }
 
 /*
 * private methods
 */
-void Channel::update_counter_clock(void)
+void Channel::update_counter_clock(uint8_t TCCLKSValue)
 {
-  switch (registerData[TC_CMR_I] & TC_CMRx_TCCLKS) {
+  switch (TCCLKSValue) {
     case 0:
       this->counterClockFreqHz = this->curPmcData.mck / 2;
       break;
@@ -288,6 +319,7 @@ void Channel::set_clock_enable(bool isEnabled)
     registerData[TC_SR_I] &= ~TC_SR_CLKSTA;
   }
 }
+
 
 // void Channel::initInterrupt(void *interruptMethod) {
 //     mInterruptMethod = interruptMethod;

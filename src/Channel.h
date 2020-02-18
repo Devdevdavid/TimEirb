@@ -147,7 +147,7 @@ public:
 private:
   void update_counter_value(void);
   void tio_update(void);
-  void update_counter_clock(void);
+  void update_counter_clock(uint8_t TCCLKSValue);
   void reset_counter(void);
   void set_clock_enable(bool isEnabled);
 
@@ -161,7 +161,7 @@ private:
 
   bool isWriteProtected;                /** Tell if Write protection is enabled (Works on some registers) */
   sc_time lastCounterUpdate;            /** Indicates the last simulation instant when the counter had been updated */
-
+  uint8_t waveformSelection;
   void *mInterruptMethod;
 };
 
