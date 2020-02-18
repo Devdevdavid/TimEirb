@@ -32,7 +32,7 @@ david: all
 aurelien: SYSTEMC := /net/s/ddevant/lib/systemc-2.3.3
 aurelien: all
 
-guillaume: SYSTEMC := /net/s/ddevant/lib/systemc-2.3.3
+guillaume: SYSTEMC := /net/s/gchene/Documents/SystemC/systemc-2.3.3/systemc-2.3.3
 guillaume: all
 
 ophelie: SYSTEMC := /net/s/ddevant/lib/systemc-2.3.3
