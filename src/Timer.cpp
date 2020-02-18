@@ -32,6 +32,12 @@ void Timer::b_transport_pcm(tlm_generic_payload& trans, sc_time& delay)
 {
     struct pmc_data *pmcData;
 
+    // We support only write command on this socket
+    if (trans.get_command() != TLM_WRITE_COMMAND) {
+        trans.set_response_status(TLM_COMMAND_ERROR_RESPONSE);
+        return;
+    }
+
     // The only data valid is a struct pmc_data, check length
     if (trans.get_data_length() != sizeof(struct pmc_data)) {
         trans.set_response_status(TLM_BURST_ERROR_RESPONSE);
@@ -137,7 +143,7 @@ int Timer::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
       if ((*pData) & TC_BCR_SYNC) {
         // Sync all channels
         for (int i = 0; i < CHANNEL_COUNT; ++i) {
-          channels[i]->set_sync();
+          //channels[i]->set_sync();//décommenter si réalisé dans channel
         }
       }
       break;
@@ -161,7 +167,7 @@ int Timer::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
         }
 
         if (registerData[TC_BMR_I] & TC_BMR_POSEN){
-          
+          //Not used in waveform mode
         }
         else{
           
