@@ -1,6 +1,8 @@
 #ifndef _TOOLS_H_
 #define _TOOLS_H_
 
+#include <cstdint>
+
 // MACROS
 #define is_in_range(value, start, len)  ((value >= start) && (value < (start + len)))
 #define _need_wpen_()    				if (this->isWriteProtected) { return -1; } // Return if write permission is off
@@ -17,6 +19,8 @@
 #define MEGA			(KILO * KILO)
 #define GIGA			(KILO * MEGA)
 #define REGISTER_SIZE	sizeof(uint32_t)
+
+int64_t get_min_pos_value(int64_t array[], int len);
 
 
 #endif /* _TOOLS_H_ */

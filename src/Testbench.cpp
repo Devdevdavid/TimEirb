@@ -1,7 +1,8 @@
 #include "Testbench.h"
 #include "Tools.h"
 
-Testbench::Testbench(sc_module_name name) : sc_module(name), pmcSocket("pmcSocket"), busSocket("busSocket") {
+Testbench::Testbench(sc_module_name name) : sc_module(name), pmcSocket("pmcSocket"), busSocket("busSocket")
+{
   timer1 = new Timer("Timer1");
   timer1->set_base_address(TIMER0_BASE_ADDR);
 
@@ -146,10 +147,10 @@ void Testbench::b_transport_tio(tlm_generic_payload& trans, sc_time& delay)
     memcpy(&(this->tioData[channelId]), tioData, sizeof(struct socket_tio_data_t));
 
     cout << "New TIO value for channel " << to_string(channelId) << endl;
-    cout << "TIOA Freq = " << this->tioData[channelId].tioA.clockFrequency << endl;
-    cout << "TIOA Duty = " << this->tioData[channelId].tioA.dutyCycle << endl;
-    cout << "TIOB Freq = " << this->tioData[channelId].tioB.clockFrequency << endl;
-    cout << "TIOB Duty = " << this->tioData[channelId].tioB.dutyCycle << endl;
+    cout << "\tTIOA Freq = " << this->tioData[channelId].tioA.clockFrequency << endl;
+    cout << "\tTIOA Duty = " << this->tioData[channelId].tioA.dutyCycle << endl;
+    cout << "\tTIOB Freq = " << this->tioData[channelId].tioB.clockFrequency << endl;
+    cout << "\tTIOB Duty = " << this->tioData[channelId].tioB.dutyCycle << endl;
 
     trans.set_response_status(TLM_OK_RESPONSE);
 }
@@ -195,7 +196,7 @@ int Testbench::test_timer_configuration(void)
   uint32_t tmpArray[] = {0, 10, 100};
   uint32_t regABCArray[] = {TC_RA, TC_RB, TC_RC};
 
-  printf("> BEGIN TIMER CONFIGURATION\n");
+  printf("\n> BEGIN  TIMER CONFIGURATION\n");
 
 
   // clock configuration
@@ -262,7 +263,7 @@ int Testbench::test_timer_configuration(void)
 
 
 int Testbench::test_timer_address(void) {
-  printf("> BEGIN TIMER ADDRESS\n");
+  printf("\n> BEGIN  TIMER ADDRESS\n");
 
   if (timer0_write_byte(0, 0)) {
   	SC_REPORT_ERROR("Testbench::test_timer_address()", "Unable to write at T0@0x0");
@@ -296,7 +297,7 @@ int Testbench::test_write_protection(void)
 {
   uint32_t tmp1 = TC_BMR_Mask, tmp2 = 0;
 
-  printf("> BEGIN WRITE PROTECTION\n");
+  printf("\n> BEGIN  WRITE PROTECTION\n");
 
   if (timer0_write_byte(TC_BMR, tmp1)) {
     SC_REPORT_ERROR("Testbench::test_write_protection()", "Unable to write at T0@BMR");
@@ -328,7 +329,7 @@ int Testbench::test_interruption(void)
   uint32_t interTimerArray[] = {TC_QIxR_IDX, TC_QIxR_DIRCHG, TC_QIxR_QERR};
   uint32_t interChannelArray[] = {TC_IxR_COVFS, TC_IxR_LOVRS, TC_IxR_CPAS, TC_IxR_CPBS, TC_IxR_CPCS, TC_IxR_LDRAS, TC_IxR_LDRBS, TC_IxR_ETRGS};
 
-  printf("> BEGIN INTERRUPTION\n");
+  printf("\n> BEGIN  INTERRUPTION\n");
 
   for (int i = 0; i < sizeof(interTimerArray) / sizeof(uint32_t); ++i) {
     // Enable interrupt
@@ -395,7 +396,7 @@ int Testbench::test_write_register_ABC(void)
   uint32_t regABCArray[] = {TC_RA, TC_RB, TC_RC};
   uint32_t tmp1 = 0x5A5A, tmp2;
 
-  printf("> BEGIN WRITE REGISTER A/B/C\n");
+  printf("\n> BEGIN  WRITE REGISTER A/B/C\n");
 
   for (int i = 0; i < sizeof(regABCArray) / sizeof(uint32_t); ++i) {
     printf("TC_R%c:\n", (i == 0) ? 'A' : (i == 1) ? 'B' : 'C');
@@ -439,7 +440,7 @@ int Testbench::test_counter_update(void)
 {
   uint32_t tmp1, tmp2 = 0;
 
-  printf("> BEGIN COUNTER UPDATE\n");
+  printf("\n> BEGIN  COUNTER UPDATE\n");
 
   // Set input clock
   if (timer0_read_byte(TC_CMR, &tmp1)) {
@@ -482,12 +483,42 @@ int Testbench::test_counter_update(void)
   return 0;
 }
 
+int Testbench::test_tio_ab(void)
+{
+  uint32_t tmp1, tmp2 = 0;
+
+  printf("\n> BEGIN  TIO A/B\n");
+
+  set_write_protection(false);
+  timer0_write_byte(TC_CMR, TC_CMRx_WAVE | TC_CMRw_WAVSEL_10);
+  timer0_write_byte(TC_RA, 100);
+  timer0_write_byte(TC_RB, 300);
+  timer0_write_byte(TC_RC, 500);
+  set_pmc_data(2 * KILO, 32 * KILO);
+  set_clock_enable(0, true);
+
+  if (tioData[0].tioA.clockFrequency != 2) {
+    SC_REPORT_ERROR("Testbench::test_tio_ab()", "Bad TIOA Frequency");
+  }
+  if (tioData[0].tioB.clockFrequency != 2) {
+    SC_REPORT_ERROR("Testbench::test_tio_ab()", "Bad TIOB Frequency");
+  }
+  if (tioData[0].tioA.dutyCycle != 4000) {
+    SC_REPORT_ERROR("Testbench::test_tio_ab()", "Bad TIOA DutyCycle");
+  }
+  if (tioData[0].tioB.dutyCycle != 8000) {
+    SC_REPORT_ERROR("Testbench::test_tio_ab()", "Bad TIOB DutyCycle");
+  }
+
+  printf("> TIO A/B: PASSED\n");
+  return 0;
+}
+
 /********************************************************
  *						TEST STEPS
  ********************************************************/
 
 void Testbench::main_test(void) {
-  set_pmc_data(0, 0);
   set_pmc_data(1 * KILO, 32 * KILO);
   test_timer_configuration();
   test_timer_address();
@@ -495,4 +526,5 @@ void Testbench::main_test(void) {
   test_interruption();
   test_write_register_ABC();
   test_counter_update();
+  test_tio_ab();
 }
