@@ -16,14 +16,13 @@ Channel::Channel(sc_module_name name) : sc_module(name), tioSocket("TioSocket")
     this->lastCounterUpdate = SC_ZERO_TIME;               // Last update is at 0 sec
     this->mInterruptMethod = NULL;                        // No interrupt method yet
 
-    //interrupt
+    //interrupt thread
     SC_THREAD(counter_overflow);
-    SC_THREAD(load_overrun);
     SC_THREAD(RA_compare);
     SC_THREAD(RB_compare);
     SC_THREAD(RC_compare);
-    SC_THREAD(RA_loading);
-    SC_THREAD(RB_loading);
+
+    update_interrupt_thread();
 }
 
 /**
@@ -122,6 +121,7 @@ int Channel::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
         }
 
         registerData[TC_RA_I] = (*pData);
+        this->update_interrupt_thread();
       }
       break;
 
@@ -137,6 +137,7 @@ int Channel::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
         }
 
         registerData[TC_RB_I] = (*pData);
+        this->update_interrupt_thread();
       }
       break;
 
@@ -146,6 +147,7 @@ int Channel::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
       } else {
         _need_wpen_();
         registerData[TC_RC_I] = (*pData);
+        this->update_interrupt_thread();
       }
       break;
 
@@ -268,6 +270,7 @@ void Channel::update_counter_clock(uint8_t TCCLKSValue)
         Ignoring clock choice (XC0, XC1 and XC2 not supported)\n");
       break;
   }
+  this->update_interrupt_thread();
 }
 
 void Channel::update_counter_value(void)
@@ -344,6 +347,7 @@ void Channel::reset_counter(void)
   // Force timestamp then reset
   lastCounterUpdate = sc_time_stamp();
   registerData[TC_CV_I] = 0;
+  this->update_interrupt_thread();
 }
 
 void Channel::set_clock_enable(bool isEnabled)
@@ -359,6 +363,7 @@ void Channel::set_clock_enable(bool isEnabled)
     // Save
     registerData[TC_SR_I] &= ~TC_SR_CLKSTA;
   }
+  this->update_interrupt_thread();
 }
 
  void Channel::init_interrupt(void *interruptMethod)
@@ -368,12 +373,88 @@ void Channel::set_clock_enable(bool isEnabled)
 
  void Channel::update_interrupt_thread()
  {
+   //update counter value 
+   this->update_counter_value();
+
+   //reset event
+   cnt_ovf.cancel();
+   ra_comp.cancel();
+   rb_comp.cancel();
+   rc_comp.cancel();
+
+   //conpute event timeout
+    uint64_t cnt_ovf_time = 0;
+    uint64_t ra_comp_time = 0;
+    uint64_t rb_comp_time = 0;
+    uint64_t rc_comp_time = 0;
+    //TODO
+
+   if (this->counterClockFreqHz != 0)
+    {
+      if (TC_IMR_I & TC_IxR_COVFS == TC_IxR_COVFS)
+        cnt_ovf_time = ((UINT32_MAX - registerData[TC_CV_I])*GIGA)/this->counterClockFreqHz);
+
+      if ((TC_IMR_I & TC_IxR_CPAS == TC_IxR_CPAS) && (registerData[TC_RA_I] > registerData[TC_CV_I]))
+        ra_comp_time = ((registerData[TC_RA_I] - registerData[TC_CV_I])*GIGA)/this->counterClockFreqHz);
+
+      if ((TC_IMR_I & TC_IxR_CPBS == TC_IxR_CPBS) && (registerData[TC_RB_I] > registerData[TC_CV_I]))
+        rb_comp_time = ((registerData[TC_RB_I] - registerData[TC_CV_I])*GIGA)/this->counterClockFreqHz);
+
+      if ((TC_IMR_I & TC_IxR_CPCS == TC_IxR_CPCS) && (registerData[TC_RC_I] > registerData[TC_CV_I]))
+        rc_comp_time = ((registerData[TC_RC_I] - registerData[TC_CV_I])*GIGA)/this->counterClockFreqHz);
+      
+      //reconfigure event timeout
+      cnt_ovf.notify(cnt_ovf_time, SC_NS);
+      ra_comp.notify(ra_comp_time, SC_NS);
+      rb_comp.notify(rb_comp_time, SC_NS);
+      rc_comp.notify(rc_comp_time, SC_NS);
+    }
  }
 
-  void Channel::counter_overflow() {}
-  void Channel::load_overrun() {}
-  void Channel::RA_compare() {}
-  void Channel::RB_compare() {}
-  void Channel::RC_compare() {}
-  void Channel::RA_loading() {}
-  void Channel::RB_loading() {}
+  void Channel::counter_overflow()
+  {
+    while (1)
+    {
+      wait(cnt_ovf);
+      cout << "counter overflow : " << sc_time_stamp() << endl;
+      this->registerData[TC_SR_I] |= TC_IxR_COVFS;
+      this->update_interrupt_thread();
+      this->mInterruptMethod();
+    }
+  }
+
+  void Channel::RA_compare() 
+  {
+    while (1)
+    {
+      wait(ra_comp);
+      cout << "ra : " << sc_time_stamp() << endl;
+      this->registerData[TC_SR_I] |= TC_IxR_CPAS;
+      this->update_interrupt_thread();
+      this->mInterruptMethod();
+    }
+  }
+
+  void Channel::RB_compare() 
+  {
+    while (1)
+    {
+      wait(rb_comp);
+      cout << "rb : " << sc_time_stamp() << endl;
+      this->registerData[TC_SR_I] |= TC_IxR_CPBS;
+      this->update_interrupt_thread();
+      this->mInterruptMethod();
+    }
+  }
+
+  void Channel::RC_compare() 
+  {
+    while (1)
+    {
+      wait(rc_comp);
+      cout << "rc : " << sc_time_stamp() << endl;
+      this->registerData[TC_SR_I] |= TC_IxR_CPCS;
+      this->update_interrupt_thread();
+      this->mInterruptMethod();
+    }
+  }
