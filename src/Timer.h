@@ -78,6 +78,10 @@
 #define TC_WPMR_PASSWORD	0x54494D
 #define TC_WPMR_WPEN		(1 << 0)
 
+/** TC_CCR bit definition */
+#define TC_CCR0		(1 << 0)
+
+
 
 SC_MODULE(Timer)
 {
@@ -95,6 +99,7 @@ public:
 private:
 	int manage_register(uint8_t cmd, uint32_t address, uint32_t *pData);
 	void set_write_protection(bool isEnabled);
+	void set_clock_enable(uint8_t channelId, bool isEnabled);
 
 /**
  * Public attributes

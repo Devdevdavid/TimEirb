@@ -131,9 +131,56 @@ int Testbench::set_write_protection(bool isEnabled)
   return timer0_write_byte(TC_WPMR, value);
 }
 
+int Testbench::set_clock_enable(uint8_t channelId, bool isEnabled)
+{
+  uint32_t value = (isEnabled) ? TC_CCR_CLKEN : TC_CCR_CLKDIS;
+  
+  return timer0_write_byte(channelId * TIMER_CHANNEL_ADDR_SPACE + TC_CCR, value);
+}
+
 /********************************************************
  *						TEST API
  ********************************************************/
+
+
+int Testbench::test_timer_configuration(void) {
+  uint32_t tmp;
+
+  printf("> BEGIN TIMER CONFIGURATION\n");
+
+  
+  if (set_clock_enable(0, false)) {
+    SC_REPORT_ERROR("Testbench::set_clock_enable()", "Can't disable the clock");
+  }
+  // Read mask
+  if (timer0_read_byte(TC_SR, &tmp)) {
+    SC_REPORT_ERROR("Testbench::set_clock_enable()", "Unable to read at T0@SR0");
+  }
+  // Test value
+  if (tmp & TC_SR_CLKSTA != 1) {
+    SC_REPORT_ERROR("Testbench::set_clock_enable()", "Unable to reset the clock on T0");
+  }
+
+
+
+  if (set_clock_enable(0, true)) {
+    SC_REPORT_ERROR("Testbench::set_clock_enable()", "Can't enable the clock");
+  }
+  // Read mask
+  if (timer0_read_byte(TC_SR, &tmp)) {
+    SC_REPORT_ERROR("Testbench::set_clock_enable()", "Unable to read at T0@SR0");
+  }
+  // Test value
+  if (tmp & TC_SR_CLKSTA != 0) {
+    SC_REPORT_ERROR("Testbench::set_clock_enable()", "Unable to set the clock on T0");
+  }
+
+
+  printf("> TIMER CONFIGURATION: PASSED\n");
+  return 0;
+}
+
+
 
 int Testbench::test_timer_address(void) {
   printf("> BEGIN TIMER ADDRESS\n");
@@ -363,6 +410,7 @@ int Testbench::test_counter_update(void)
 void Testbench::main_test(void) {
   set_pmc_data(0, 0);
   set_pmc_data(1 * KILO, 32 * KILO);
+  test_timer_configuration();
   test_timer_address();
   test_write_protection();
   test_interruption();
