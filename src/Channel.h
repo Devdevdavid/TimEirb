@@ -151,6 +151,8 @@ private:
   void reset_counter(void);
   void set_clock_enable(bool isEnabled);
 
+  void *mInterruptMethod;
+  struct clockFrequency clk;
   /*
    * private members
    */
