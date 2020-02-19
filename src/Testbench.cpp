@@ -535,18 +535,23 @@ int Testbench::test_tio_ab(void)
 {
   uint32_t tmp1, tmp2 = 0;
 
-  printf("\n> BEGIN  TIO A/B\n");
+  printf("\n> BEGIN TIO A/B\n");
 
+  printf("Disabling write protection...\n");
   set_write_protection(false);
+  // Reset timer
+  printf("Reseting timer...\n");
+  timer0_write_byte(TC_CCR, TC_CCR_SWTRG);
   set_clock_enable(0, false);
+  printf("Setting thresholds A/B/C...\n");
   timer0_write_byte(TC_CMR, TC_CMRx_WAVE | TC_CMRw_WAVSEL_10);
   timer0_write_byte(TC_RA, 100);
   timer0_write_byte(TC_RB, 300);
   timer0_write_byte(TC_RC, 500);
-  set_pmc_data(2 * KILO, 32 * KILO);
-
   // Enable interrupts
   timer0_write_byte(TC_IER, TC_IxR_COVFS | TC_IxR_CPAS | TC_IxR_CPBS | TC_IxR_CPCS);
+  printf("Activating clocks...\n");
+  set_pmc_data(2 * KILO, 32 * KILO);
   set_clock_enable(0, true);
 
   if (tioData[0].tioA.clockFrequency != 2) {
@@ -561,6 +566,9 @@ int Testbench::test_tio_ab(void)
   if (tioData[0].tioB.dutyCycle != 8000) {
     SC_REPORT_ERROR("Testbench::test_tio_ab()", "Bad TIOB DutyCycle");
   }
+
+  // Wait interruption A, B and C
+  wait(600, SC_MS);
 
   printf("> TIO A/B: PASSED\n");
   return 0;
