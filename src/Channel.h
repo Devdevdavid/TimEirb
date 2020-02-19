@@ -67,6 +67,10 @@
 #define TC_CMRw_EEVT    (3 << 10)
 #define TC_CMRw_ENETRG  (1 << 11)
 #define TC_CMRw_WAVSEL  (3 << 13)
+#define TC_CMRw_WAVSEL_00  (0 << 13)
+#define TC_CMRw_WAVSEL_01  (1 << 13)
+#define TC_CMRw_WAVSEL_10  (2 << 13)
+#define TC_CMRw_WAVSEL_11  (3 << 13)
 #define TC_CMRw_ACPA    (3 << 16)
 #define TC_CMRw_ACPC    (3 << 18)
 #define TC_CMRw_AEEVT   (3 << 20)
@@ -142,6 +146,8 @@ public:
   void set_write_protection(bool isEnabled);
   void set_pmc_clock(const struct pmc_data &pmcData);
 
+  void method_update_next_event(void);
+
   void init_interrupt(void *interruptMethod);
   void get_tioa(struct tio_t tioa);
   void get_tiob(struct tio_t tiob);
@@ -153,7 +159,8 @@ public:
 private:
   void update_counter_value(void);
   void tio_update(void);
-  void update_counter_clock(uint8_t TCCLKSValue);
+  void send_tio_update(void);
+  void update_counter_clock();
   void reset_counter(void);
   void set_clock_enable(bool isEnabled);
   void update_interrupt_thread();
@@ -184,18 +191,13 @@ private:
 
   bool isWriteProtected;                /** Tell if Write protection is enabled (Works on some registers) */
   sc_time lastCounterUpdate;            /** Indicates the last simulation instant when the counter had been updated */
-  uint8_t waveformSelection;
+  bool isInWaveformMode;                /** Tell if Channel is in Waveform or Capture mode */
+  uint8_t waveformSelection;            /** WAVE MODE: 0, 1, 2, 3*/
   struct socket_tio_data_t curTioData;  /** Current value of the TIOA and TIOB */
 
 
   //interrupt signal reset
-  sc_event cnt_ovf;
-  sc_event ld_ovr;
-  sc_event ra_comp;
-  sc_event rb_comp;
-  sc_event rc_comp;
-  sc_event ra_ld;
-  sc_event rb_ld;
+  sc_event nextUpdateEvent;
 
   void *mInterruptMethod;
 };

@@ -68,6 +68,7 @@ public:
   int test_interruption(void);
   int test_write_register_ABC(void);
   int test_counter_update(void);
+  int test_tio_ab(void);
 
 /**
  * TEST STEP
