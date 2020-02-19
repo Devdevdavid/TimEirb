@@ -1,12 +1,11 @@
 #include "Testbench.h"
 #include "Tools.h"
 
-Testbench::Testbench(sc_module_name name) : sc_module(name), pmcSocket("pmcSocket"), busSocket("busSocket")
+Testbench::Testbench(sc_module_name name) : sc_module(name), busSocket("busSocket"), configSocket("ConfigSocket")
 {
   timer1 = new Timer("Timer1");
   timer1->set_base_address(TIMER0_BASE_ADDR);
 
-  pmcSocket.bind(timer1->socketPMC);
   busSocket.bind(timer1->socketBus);
 
   for (int i = 0; i < CHANNEL_COUNT; ++i) {
@@ -37,7 +36,7 @@ void Testbench::socket_action(tlm_utils::simple_initiator_socket<Testbench> &soc
     //fprintf(stderr, "Testbench::socket_action() %c@0x%04X L=%dB\n", rwChar, trans->get_address(), trans->get_data_length());
   }
 }
-
+/*
 int Testbench::pmc_write(const struct pmc_data &pmcData) {
   int ret = 0;
   tlm_generic_payload *trans = new tlm_generic_payload;
@@ -56,7 +55,7 @@ int Testbench::pmc_write(const struct pmc_data &pmcData) {
 
   delete (trans);
   return ret;
-}
+}*/
 /** no pmc_read() */
 
 int Testbench::bus_read(uint32_t address, uint8_t *value, uint8_t length) {
@@ -161,13 +160,23 @@ void Testbench::b_transport_tio(tlm_generic_payload& trans, sc_time& delay)
 
 int Testbench::set_pmc_data(uint32_t mck, uint32_t slck)
 {
-  struct pmc_data pmcData;
-  pmcData.mck = mck;
-  pmcData.slck = slck;
+  tlm::tlm_generic_payload *trans = new tlm::tlm_generic_payload;
+    uint32_t data;
+    PMC_MCKR_reg reg1 =  {0};
+    CKGR_MOR_reg reg = {0};
+    reg.bits.MOSCSEL = 0;
+    reg.bits.MOSCRCF = 1;
+    reg1.bits.CSS = 1;
+    reg1.bits.PRES = 1;
 
-  if (pmc_write(pmcData)) {
-    SC_REPORT_ERROR("Testbench::set_pmc_data_valid()", "Unable to set PMC clocks");
-  }
+    data = reg1.integer_value;
+    trans->set_command(tlm::TLM_WRITE_COMMAND);
+    trans->set_address(PMC_MCKR_ADDR);
+    trans->set_data_ptr(reinterpret_cast<unsigned char *>(&data));
+    trans->set_data_length(4);
+
+    sc_time delay = sc_time(10, SC_NS);
+    configSocket->b_transport( *trans, delay );
   return 0;
 }
 

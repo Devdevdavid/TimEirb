@@ -3,9 +3,13 @@
 
 #include "pmc_interface.h"
 #include "tlm_head.h"
+#include "pmc_registers.h"
+
+#define     PMC_BASE_ADDR       0x400e0600
+#define     PMC_MCKR_ADDR       (PMC_BASE_ADDR + 0x30)
 
 // MODULES
-#include "pmc_simulator.h"
+//#include "pmc_simulator.h"
 #include "Timer.h"
 
 SC_MODULE(Testbench) {
@@ -13,6 +17,8 @@ SC_MODULE(Testbench) {
  * Public methods
  */
 public:
+  Timer *timer1;
+  tlm_utils::simple_initiator_socket<Testbench> configSocket;
   SC_CTOR(Testbench);
 
 /**
@@ -20,10 +26,8 @@ public:
  */
 private:
   //PmcSimulator *pmcSimulator;
-  Timer *timer1;
-  tlm_utils::simple_initiator_socket<Testbench> pmcSocket;
+  
   tlm_utils::simple_initiator_socket<Testbench> busSocket;
-
   tlm_utils::simple_target_socket<Testbench> tioSockets[CHANNEL_COUNT];
 
   struct socket_tio_data_t tioData[CHANNEL_COUNT];

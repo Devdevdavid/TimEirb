@@ -14,11 +14,11 @@ else
     endif
 endif
 
-CPPFLAGS = -I ./src -I ./test -I $(SYSTEMC)/include -Wno-deprecated -O0
+CPPFLAGS = -I ./src -I ./test/pmc/inc -I $(SYSTEMC)/include -Wno-deprecated -O0
 SYSTEMC := /to/be/defined/systemc-2.3.3
 LDLIBS += -L.
 
-SRCS = $(wildcard src/*.cpp)
+SRCS = $(wildcard src/*.cpp) $(wildcard test/pmc/src/*.cpp)
 OBJS = $(SRCS:%.cpp=%.o)
 
 PROGRAM = run.x
