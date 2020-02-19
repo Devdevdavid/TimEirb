@@ -10,8 +10,12 @@ Testbench::Testbench(sc_module_name name) : sc_module(name), pmcSocket("pmcSocke
   busSocket.bind(timer1->socketBus);
 
   for (int i = 0; i < CHANNEL_COUNT; ++i) {
+    // TIO
     timer1->channels[i]->tioSocket.bind(tioSockets[i]);
     tioSockets[i].register_b_transport(this, &Testbench::b_transport_tio);
+    // Interrupt
+    timer1->channels[i]->intSocket.bind(intSockets[i]);
+    intSockets[i].register_b_transport(this, &Testbench::b_transport_int);
   }
 
   SC_THREAD(main_test);
@@ -153,6 +157,50 @@ void Testbench::b_transport_tio(tlm_generic_payload& trans, sc_time& delay)
     cout << "\tTIOB Duty = " << this->tioData[channelId].tioB.dutyCycle << endl;
 
     trans.set_response_status(TLM_OK_RESPONSE);
+}
+
+/********************************************************
+ *            INT MANAGEMENT
+ ********************************************************/
+
+void Testbench::b_transport_int(tlm_generic_payload& trans, sc_time& delay)
+{
+  uint8_t channelId = trans.get_address();
+  uint32_t *intData;
+  string str;
+
+  // The only data valid is a struct pmc_data, check length
+  if (trans.get_data_length() != sizeof(uint32_t)) {
+    trans.set_response_status(TLM_BURST_ERROR_RESPONSE);
+    return;
+  }
+
+  // Cast and check the pointer
+  intData = (uint32_t *) trans.get_data_ptr();
+  if (intData == NULL) {
+    trans.set_response_status(TLM_GENERIC_ERROR_RESPONSE);
+    return;
+  }
+
+  // Check channel Id
+  if (channelId >= CHANNEL_COUNT) {
+    trans.set_response_status(TLM_BURST_ERROR_RESPONSE);
+    return;
+  }
+
+  // Save the given value
+  switch (*intData) {
+    case TC_IxR_COVFS: str = "COVFS"; break;
+    case TC_IxR_CPAS: str = "CPAS"; break;
+    case TC_IxR_CPBS: str = "CPBS"; break;
+    case TC_IxR_CPCS: str = "CPCS"; break;
+    default:
+      fprintf(stderr, "Testbench::b_transport_int() Unsupported Interruption 0x%08X\n", intData);
+      return;
+  }
+  trans.set_response_status(TLM_OK_RESPONSE);
+
+  cout << "Got interruption " << str << " on channel " << to_string(channelId) << endl;
 }
 
 /********************************************************
@@ -490,11 +538,15 @@ int Testbench::test_tio_ab(void)
   printf("\n> BEGIN  TIO A/B\n");
 
   set_write_protection(false);
+  set_clock_enable(0, false);
   timer0_write_byte(TC_CMR, TC_CMRx_WAVE | TC_CMRw_WAVSEL_10);
   timer0_write_byte(TC_RA, 100);
   timer0_write_byte(TC_RB, 300);
   timer0_write_byte(TC_RC, 500);
   set_pmc_data(2 * KILO, 32 * KILO);
+
+  // Enable interrupts
+  timer0_write_byte(TC_IER, TC_IxR_COVFS | TC_IxR_CPAS | TC_IxR_CPBS | TC_IxR_CPCS);
   set_clock_enable(0, true);
 
   if (tioData[0].tioA.clockFrequency != 2) {

@@ -5,7 +5,7 @@
  * Public methods
  */
 
-Channel::Channel(sc_module_name name) : sc_module(name), tioSocket("TioSocket")
+Channel::Channel(sc_module_name name) : sc_module(name), tioSocket("TioSocket"), intSocket("IntSocket")
 {
     memset(this->registerData, 0, sizeof(registerData));  // Reset value of internal registers
     memset(&this->curPmcData, 0, sizeof(struct pmc_data));// Reset value of PMC data
@@ -15,7 +15,6 @@ Channel::Channel(sc_module_name name) : sc_module(name), tioSocket("TioSocket")
     this->counterClockFreqHz = 0;                         // Clock is disabled at reset
     this->isWriteProtected = false;                       // Write protection is disabled at reset
     this->lastCounterUpdate = SC_ZERO_TIME;               // Last update is at 0 sec
-    this->mInterruptMethod = NULL;                        // No interrupt method yet
 
     SC_METHOD(method_update_next_event);
     sensitive << nextUpdateEvent;
@@ -100,9 +99,6 @@ int Channel::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
 
         registerData[TC_RA_I] = (*pData);
 
-        // Update output
-        tio_update();
-
         // CompA changed, update event
         method_update_next_event();
       }
@@ -121,9 +117,6 @@ int Channel::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
 
         registerData[TC_RB_I] = (*pData);
 
-        // Update output
-        tio_update();
-
         // CompB changed, update event
         method_update_next_event();
       }
@@ -135,9 +128,6 @@ int Channel::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
       } else {
         _need_wpen_();
         registerData[TC_RC_I] = (*pData);
-
-        // Update output
-        tio_update();
 
         // CompC changed, update event
         method_update_next_event();
@@ -159,9 +149,6 @@ int Channel::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
 
       // Enable bits only if they are in the mask
       registerData[TC_IMR_I] |= (*pData) & TC_IxR_Mask;
-
-      //update Interrupt enable
-      update_interrupt_thread();
       break;
 
     case TC_IDR:               /** Disable interrupts */
@@ -169,9 +156,6 @@ int Channel::manage_register(uint8_t cmd, uint32_t address, uint32_t *pData)
 
       // Disable bits only if they are in the mask
       registerData[TC_IMR_I] &= ~((*pData) & TC_IxR_Mask);
-
-      //update Interupt event
-      update_interrupt_thread();
       break;
 
     case TC_IMR:               /** Interrupt mask */
@@ -237,6 +221,7 @@ void Channel::method_update_next_event(void)
 
   // Do stuff to update values
   update_counter_value();
+  tio_update();
 
   // Compute next event
   deltaList[0] = (int64_t) registerData[TC_RA_I] - registerData[TC_CV_I];
@@ -290,9 +275,6 @@ void Channel::update_counter_clock()
       break;
   }
 
-  // Update outputs
-  tio_update();
-
   // Clock changed, timeout need update
   method_update_next_event();
 }
@@ -333,7 +315,7 @@ void Channel::update_counter_value(void)
     // Trigger Overflow interrupt
     if (registerData[TC_IMR_I] & TC_IxR_COVFS) {
       registerData[TC_SR_I] |= TC_SR_COVFS;
-      printf("OVF int, %d\n", registerData[TC_RA_I]);
+      send_int_update(TC_IxR_COVFS);
     }
   }
 
@@ -342,20 +324,20 @@ void Channel::update_counter_value(void)
 
   if (registerData[TC_IMR_I] & TC_IxR_CPAS) {
     if (registerData[TC_CV_I] == registerData[TC_RA_I]) {
-      registerData[TC_SR_I] |= TC_IxR_CPAS;
-      printf("INT(RA = %d)\n", registerData[TC_RA_I]);
+      registerData[TC_SR_I] |= TC_SR_CPAS;
+      send_int_update(TC_IxR_CPAS);
     }
   }
   if (registerData[TC_IMR_I] & TC_IxR_CPBS) {
     if (registerData[TC_CV_I] == registerData[TC_RB_I]) {
-      registerData[TC_SR_I] |= TC_IxR_CPBS;
-      printf("INT(RB = %d)\n", registerData[TC_RB_I]);
+      registerData[TC_SR_I] |= TC_SR_CPBS;
+      send_int_update(TC_IxR_CPBS);
     }
   }
   if (registerData[TC_IMR_I] & TC_IxR_CPCS) {
     if (registerData[TC_CV_I] == registerData[TC_RC_I]) {
-      registerData[TC_SR_I] |= TC_IxR_CPCS;
-      printf("INT(RC = %d)\n", registerData[TC_RC_I]);
+      registerData[TC_SR_I] |= TC_SR_CPCS;
+      send_int_update(TC_IxR_CPCS);
     }
   }
   //printf("CV = %d\n", registerData[TC_CV_I]);
@@ -370,7 +352,7 @@ void Channel::tio_update(void)
   memset(&tmpTioData, 0, sizeof(struct socket_tio_data_t));
 
 
-  if (isInWaveformMode) {
+  if (isInWaveformMode && (registerData[TC_SR_I] & TC_SR_CLKSTA) && (this->counterClockFreqHz != 0)) {
     switch (waveformSelection) {
       case 0:
         tmpTioData.tioA.clockFrequency = this->counterClockFreqHz / UINT32_MAX;
@@ -431,12 +413,24 @@ void Channel::send_tio_update(void)
   delete (trans);
 }
 
-void Channel::get_tioa(struct tio_t tioa)
+void Channel::send_int_update(uint32_t intId)
 {
-}
+  sc_time delay = SC_ZERO_TIME;
+  tlm_generic_payload *trans = new tlm_generic_payload;
 
-void Channel::get_tiob(struct tio_t tiob)
-{
+  trans->set_address(this->channelId);        // Identify the channel for the testbench
+  trans->set_data_ptr((uint8_t *) &intId);
+  trans->set_data_length(sizeof(uint32_t));
+  trans->set_response_status(TLM_INCOMPLETE_RESPONSE);
+
+  // Send it !
+  this->intSocket->b_transport(*trans, delay);
+
+  if (trans->is_response_error()) {
+    fprintf(stderr, "Channel::send_int_update() Transaction failed: %s\n", trans->get_response_string().c_str());
+  }
+
+  delete (trans);
 }
 
 void Channel::reset_counter(void)
@@ -465,20 +459,3 @@ void Channel::set_clock_enable(bool isEnabled)
     registerData[TC_SR_I] &= ~TC_SR_CLKSTA;
   }
 }
-
- void Channel::init_interrupt(void *interruptMethod)
- {
-     mInterruptMethod = interruptMethod;
- }
-
- void Channel::update_interrupt_thread()
- {
- }
-
-  void Channel::counter_overflow() {}
-  void Channel::load_overrun() {}
-  void Channel::RA_compare() {}
-  void Channel::RB_compare() {}
-  void Channel::RC_compare() {}
-  void Channel::RA_loading() {}
-  void Channel::RB_loading() {}

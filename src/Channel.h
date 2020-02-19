@@ -148,9 +148,6 @@ public:
 
   void method_update_next_event(void);
 
-  void init_interrupt(void *interruptMethod);
-  void get_tioa(struct tio_t tioa);
-  void get_tiob(struct tio_t tiob);
   void set_sync(void);
 
   /*
@@ -160,25 +157,17 @@ private:
   void update_counter_value(void);
   void tio_update(void);
   void send_tio_update(void);
+  void send_int_update(uint32_t intId);
   void update_counter_clock();
   void reset_counter(void);
   void set_clock_enable(bool isEnabled);
-  void update_interrupt_thread();
-
-  //interrupt function
-  void counter_overflow();
-  void load_overrun();
-  void RA_compare();
-  void RB_compare();
-  void RC_compare();
-  void RA_loading();
-  void RB_loading();
 
   /*
    * Public members
    */
 public:
   tlm_utils::simple_initiator_socket<Channel> tioSocket; /** Socket used to communicate TIO to Testbench */
+  tlm_utils::simple_initiator_socket<Channel> intSocket; /** Socket used to communicate Interruption to Testbench */
 
   /*
    * private members
@@ -198,8 +187,6 @@ private:
 
   //interrupt signal reset
   sc_event nextUpdateEvent;
-
-  void *mInterruptMethod;
 };
 
 #endif /* _CHANNEL_H_ */
