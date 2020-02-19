@@ -231,6 +231,9 @@ void Channel::method_update_next_event(void)
   if ((registerData[TC_SR_I] & TC_SR_CLKSTA) == 0) {
     return;
   }
+  if (this->counterClockFreqHz == 0) {
+    return;
+  }
 
   // Do stuff to update values
   update_counter_value();
@@ -328,24 +331,32 @@ void Channel::update_counter_value(void)
     while (counterValue > UINT32_MAX) { counterValue -= UINT32_MAX; }
 
     // Trigger Overflow interrupt
-    registerData[TC_SR_I] |= TC_SR_COVFS;
-    printf("OVF int, %d\n", registerData[TC_RA_I]);
+    if (registerData[TC_IMR_I] & TC_IxR_COVFS) {
+      registerData[TC_SR_I] |= TC_SR_COVFS;
+      printf("OVF int, %d\n", registerData[TC_RA_I]);
+    }
   }
 
   // Save new value
   registerData[TC_CV_I] = counterValue;
 
-  if (registerData[TC_CV_I] == registerData[TC_RA_I]) {
-    registerData[TC_SR_I] |= TC_IxR_CPAS;
-    printf("INT(RA = %d)\n", registerData[TC_RA_I]);
+  if (registerData[TC_IMR_I] & TC_IxR_CPAS) {
+    if (registerData[TC_CV_I] == registerData[TC_RA_I]) {
+      registerData[TC_SR_I] |= TC_IxR_CPAS;
+      printf("INT(RA = %d)\n", registerData[TC_RA_I]);
+    }
   }
-  if (registerData[TC_CV_I] == registerData[TC_RB_I]) {
-    registerData[TC_SR_I] |= TC_IxR_CPBS;
-    printf("INT(RB = %d)\n", registerData[TC_RB_I]);
+  if (registerData[TC_IMR_I] & TC_IxR_CPBS) {
+    if (registerData[TC_CV_I] == registerData[TC_RB_I]) {
+      registerData[TC_SR_I] |= TC_IxR_CPBS;
+      printf("INT(RB = %d)\n", registerData[TC_RB_I]);
+    }
   }
-  if (registerData[TC_CV_I] == registerData[TC_RC_I]) {
-    registerData[TC_SR_I] |= TC_IxR_CPCS;
-    printf("INT(RC = %d)\n", registerData[TC_RC_I]);
+  if (registerData[TC_IMR_I] & TC_IxR_CPCS) {
+    if (registerData[TC_CV_I] == registerData[TC_RC_I]) {
+      registerData[TC_SR_I] |= TC_IxR_CPCS;
+      printf("INT(RC = %d)\n", registerData[TC_RC_I]);
+    }
   }
   //printf("CV = %d\n", registerData[TC_CV_I]);
 
